@@ -1,0 +1,87 @@
+
+import React, { useState } from 'react';
+import { TableElement } from '../types';
+import { useData } from '../context/DataContext';
+
+interface BookingModalProps {
+    table: TableElement;
+    restaurantId: string;
+    onClose: () => void;
+}
+
+const BookingModal: React.FC<BookingModalProps> = ({ table, restaurantId, onClose }) => {
+    const { addBooking } = useData();
+    const [guestName, setGuestName] = useState('');
+    const [guestPhone, setGuestPhone] = useState('');
+    const [guestCount, setGuestCount] = useState<number>(2);
+    const [bookingDate, setBookingDate] = useState(new Date().toISOString().slice(0, 10));
+    const [bookingTime, setBookingTime] = useState('19:00');
+    const [error, setError] = useState('');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!guestName || !guestPhone) {
+            setError('Please fill in your name and phone number.');
+            return;
+        }
+        if (guestCount > table.seats) {
+            setError(`This table only accommodates up to ${table.seats} guests.`);
+            return;
+        }
+        setError('');
+
+        const dateTime = new Date(`${bookingDate}T${bookingTime}`);
+        await addBooking(restaurantId, {
+            tableId: table.id,
+            guestName,
+            guestPhone,
+            guestCount,
+            dateTime
+        });
+        alert('Your booking request has been sent!');
+        onClose();
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 transition-opacity duration-300">
+            <div className="bg-brand-secondary rounded-lg shadow-2xl p-8 w-full max-w-md m-4 transform transition-all duration-300 scale-95 animate-fade-in-up">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold text-white">Book Table <span className="text-brand-blue">{table.label}</span></h2>
+                    <button onClick={onClose} className="text-gray-400 text-3xl leading-none hover:text-white transition-colors">&times;</button>
+                </div>
+                <form onSubmit={handleSubmit}>
+                    <p className="text-gray-400 mb-6">For up to <span className="font-semibold text-white">{table.seats}</span> guests.</p>
+                    
+                    {error && <p className="bg-red-900 border border-brand-red text-red-300 px-4 py-2 rounded-md mb-4 text-sm">{error}</p>}
+
+                    <div className="space-y-4">
+                        <input type="text" placeholder="Your Name" value={guestName} onChange={e => setGuestName(e.target.value)} className="w-full bg-brand-accent p-3 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-blue" required />
+                        <input type="tel" placeholder="Phone Number" value={guestPhone} onChange={e => setGuestPhone(e.target.value)} className="w-full bg-brand-accent p-3 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-blue" required />
+                        <div className="flex items-center space-x-4">
+                            <label className="text-gray-300">Guests:</label>
+                            <input type="number" value={guestCount} onChange={e => setGuestCount(parseInt(e.target.value))} min="1" max={table.seats} className="w-20 bg-brand-accent p-3 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-blue" />
+                        </div>
+                        <div className="flex space-x-4">
+                            <input type="date" value={bookingDate} onChange={e => setBookingDate(e.target.value)} className="w-full bg-brand-accent p-3 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-blue" />
+                            <input type="time" value={bookingTime} onChange={e => setBookingTime(e.target.value)} className="w-full bg-brand-accent p-3 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-blue" />
+                        </div>
+                    </div>
+
+                    <div className="mt-8 flex justify-end space-x-4">
+                        <button type="button" onClick={onClose} className="px-6 py-2 rounded-md bg-brand-accent text-white hover:bg-gray-600 transition-colors">Cancel</button>
+                        <button type="submit" className="px-6 py-2 rounded-md bg-brand-blue text-white font-semibold hover:bg-blue-600 transition-colors shadow-md">Request Booking</button>
+                    </div>
+                </form>
+            </div>
+            <style>{`
+                @keyframes fade-in-up {
+                    0% { opacity: 0; transform: translateY(20px) scale(0.95); }
+                    100% { opacity: 1; transform: translateY(0) scale(1); }
+                }
+                .animate-fade-in-up { animation: fade-in-up 0.3s ease-out forwards; }
+            `}</style>
+        </div>
+    );
+};
+
+export default BookingModal;
