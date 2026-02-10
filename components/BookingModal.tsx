@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { TableElement } from '../types';
+import { BookingStatus, TableElement } from '../types';
 import { useData } from '../context/DataContext';
 
 const formatLocalDate = (date: Date) => {
@@ -17,13 +17,31 @@ interface BookingModalProps {
 }
 
 const BookingModal: React.FC<BookingModalProps> = ({ table, restaurantId, onClose }) => {
-    const { addBooking } = useData();
+    const { addBooking, getRestaurant } = useData();
     const [guestName, setGuestName] = useState('');
     const [guestPhone, setGuestPhone] = useState('');
     const [guestCount, setGuestCount] = useState<number>(2);
     const [bookingDate, setBookingDate] = useState(formatLocalDate(new Date()));
     const [bookingTime, setBookingTime] = useState('19:00');
     const [error, setError] = useState('');
+
+    const existingBookings = getRestaurant(restaurantId)
+        ?.bookings
+        .filter(booking =>
+            booking.tableId === table.id &&
+            (booking.status === BookingStatus.PENDING || booking.status === BookingStatus.CONFIRMED) &&
+            booking.dateTime.getTime() >= Date.now()
+        )
+        .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime()) || [];
+
+    const formatBookingSlot = (date: Date) =>
+        new Intl.DateTimeFormat('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        }).format(date);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -66,6 +84,23 @@ const BookingModal: React.FC<BookingModalProps> = ({ table, restaurantId, onClos
                     {error && <p className="bg-red-900 border border-brand-red text-red-300 px-4 py-2 rounded-md mb-4 text-sm">{error}</p>}
 
                     <div className="space-y-4">
+                        <div className="bg-brand-accent/70 p-3 rounded-md border border-gray-700">
+                            <p className="text-sm font-semibold text-white mb-2">Уже занятые слоты:</p>
+                            {existingBookings.length > 0 ? (
+                                <ul className="space-y-1 text-sm text-gray-200 max-h-28 overflow-y-auto pr-1">
+                                    {existingBookings.map(booking => (
+                                        <li key={booking.id} className="flex items-center justify-between">
+                                            <span>{formatBookingSlot(booking.dateTime)}</span>
+                                            <span className={`text-xs px-2 py-0.5 rounded-full ${booking.status === BookingStatus.PENDING ? 'bg-brand-yellow/30 text-brand-yellow' : 'bg-brand-red/30 text-brand-red'}`}>
+                                                {booking.status === BookingStatus.PENDING ? 'ожидает' : 'подтверждена'}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-sm text-gray-400">На этот столик пока нет активных броней.</p>
+                            )}
+                        </div>
                         <input type="text" placeholder="Your Name" value={guestName} onChange={e => setGuestName(e.target.value)} className="w-full bg-brand-accent p-3 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-blue" required />
                         <input type="tel" placeholder="Phone Number" value={guestPhone} onChange={e => setGuestPhone(e.target.value)} className="w-full bg-brand-accent p-3 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-blue" required />
                         <div className="flex items-center space-x-4">
