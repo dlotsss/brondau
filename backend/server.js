@@ -177,12 +177,31 @@ app.post('/api/restaurants/:restaurantId/bookings', async (req, res) => {
   try {
     const { restaurantId } = req.params;
     const { tableId, tableLabel, guestName, guestPhone, guestCount, dateTime } = req.body;
+
+    const normalizedPhone = String(guestPhone || '').replace(/\D/g, '');
+    if (!normalizedPhone) {
+      return res.status(400).json({ error: 'Phone number is required' });
+    }
+
+    const existingBookingResult = await pool.query(
+      `SELECT id
+       FROM bookings
+       WHERE restaurant_id = $1
+         AND regexp_replace(guest_phone, '\\D', '', 'g') = $2
+         AND status IN ('PENDING', 'CONFIRMED', 'OCCUPIED')
+       LIMIT 1`,
+      [restaurantId, normalizedPhone]
+    );
+
+    if (existingBookingResult.rows.length > 0) {
+      return res.status(409).json({ error: 'A booking for this phone number already exists' });
+    }
     
     const result = await pool.query(`
       INSERT INTO bookings (restaurant_id, table_id, table_label, guest_name, guest_phone, guest_count, date_time)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *
-    `, [restaurantId, tableId, tableLabel, guestName, guestPhone, guestCount, dateTime]);
+    `, [restaurantId, tableId, tableLabel, guestName, normalizedPhone, guestCount, dateTime]);
     
     res.json(result.rows[0]);
   } catch (error) {

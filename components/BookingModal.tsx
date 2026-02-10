@@ -3,6 +3,13 @@ import React, { useState } from 'react';
 import { TableElement } from '../types';
 import { useData } from '../context/DataContext';
 
+const formatLocalDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
 interface BookingModalProps {
     table: TableElement;
     restaurantId: string;
@@ -14,7 +21,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ table, restaurantId, onClos
     const [guestName, setGuestName] = useState('');
     const [guestPhone, setGuestPhone] = useState('');
     const [guestCount, setGuestCount] = useState<number>(2);
-    const [bookingDate, setBookingDate] = useState(new Date().toISOString().slice(0, 10));
+    const [bookingDate, setBookingDate] = useState(formatLocalDate(new Date()));
     const [bookingTime, setBookingTime] = useState('19:00');
     const [error, setError] = useState('');
 
@@ -31,15 +38,19 @@ const BookingModal: React.FC<BookingModalProps> = ({ table, restaurantId, onClos
         setError('');
 
         const dateTime = new Date(`${bookingDate}T${bookingTime}`);
-        await addBooking(restaurantId, {
-            tableId: table.id,
-            guestName,
-            guestPhone,
-            guestCount,
-            dateTime
-        });
-        alert('Your booking request has been sent!');
-        onClose();
+        try {
+            await addBooking(restaurantId, {
+                tableId: table.id,
+                guestName,
+                guestPhone,
+                guestCount,
+                dateTime
+            });
+            alert('Your booking request has been sent!');
+            onClose();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to create booking. Please try again.');
+        }
     };
 
     return (

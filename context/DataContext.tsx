@@ -18,6 +18,16 @@ interface DataContextType {
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
+const toLocalDateTimeString = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+};
+
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
 
@@ -189,9 +199,15 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...bookingData,
+        dateTime: toLocalDateTimeString(bookingData.dateTime),
         tableLabel,
       })
     });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to create booking');
+    }
 
     const newBooking = await response.json();
 
