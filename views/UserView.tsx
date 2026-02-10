@@ -61,23 +61,23 @@ const UserView: React.FC = () => {
         const tables = restaurant.layout.filter(el => el.type === 'table') as TableElement[];
 
         tables.forEach(table => {
-            const relevantBookings = restaurant.bookings.filter(b => b.tableId === table.id && 
-                (b.status === BookingStatus.CONFIRMED || b.status === BookingStatus.PENDING)
-            );
-            
-            const isBookedNow = relevantBookings.some(b => {
-                const bookingStart = b.dateTime.getTime();
-                const bookingEnd = bookingStart + 2 * 60 * 60 * 1000; // Assume 2-hour slots
-                return now.getTime() >= bookingStart && now.getTime() < bookingEnd;
-            });
+            const activePending = restaurant.bookings
+                .filter(b => b.tableId === table.id && b.status === BookingStatus.PENDING && b.dateTime <= now)
+                .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime())[0];
 
-            if (isBookedNow) {
-                 const booking = relevantBookings.find(b => {
-                    const bookingStart = b.dateTime.getTime();
-                    const bookingEnd = bookingStart + 2 * 60 * 60 * 1000;
-                    return now.getTime() >= bookingStart && now.getTime() < bookingEnd;
-                 });
-                 statuses[table.id] = booking?.status === BookingStatus.PENDING ? 'pending' : 'confirmed';
+            const activeConfirmed = restaurant.bookings
+                .filter(
+                    b =>
+                        b.tableId === table.id &&
+                        (b.status === BookingStatus.CONFIRMED || b.status === BookingStatus.OCCUPIED) &&
+                        b.dateTime <= now
+                )
+                .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime())[0];
+
+            if (activePending) {
+                statuses[table.id] = 'pending';
+            } else if (activeConfirmed) {
+                statuses[table.id] = 'confirmed';
             } else {
                 statuses[table.id] = 'available';
             }

@@ -76,7 +76,7 @@ const BookingRequestCard: React.FC<{ booking: Booking; restaurantId: string }> =
 
 const AdminView: React.FC = () => {
     const { selectedRestaurantId } = useApp();
-    const { getRestaurant } = useData();
+    const { getRestaurant, updateBookingStatus } = useData();
     
     const restaurant = selectedRestaurantId ? getRestaurant(selectedRestaurantId) : null;
 
@@ -85,6 +85,26 @@ const AdminView: React.FC = () => {
         return restaurant.bookings
             .filter(b => b.status === BookingStatus.PENDING)
             .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    }, [restaurant]);
+
+    const occupiedTableBookings = useMemo(() => {
+        if (!restaurant) return [];
+        const now = new Date();
+
+        return (restaurant.layout.filter(el => el.type === 'table') as TableElement[])
+            .map(table => {
+                const activeBooking = restaurant.bookings
+                    .filter(
+                        b =>
+                            b.tableId === table.id &&
+                            (b.status === BookingStatus.CONFIRMED || b.status === BookingStatus.OCCUPIED) &&
+                            b.dateTime <= now
+                    )
+                    .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime())[0];
+
+                return activeBooking ? { table, booking: activeBooking } : null;
+            })
+            .filter((item): item is { table: TableElement; booking: Booking } => item !== null);
     }, [restaurant]);
 
     if (!restaurant) {
@@ -103,7 +123,33 @@ const AdminView: React.FC = () => {
                     )}
                 </div>
             </div>
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 space-y-6">
+                <div className="bg-brand-primary rounded-lg border border-brand-accent p-4">
+                    <h3 className="text-xl font-semibold mb-3">Occupied tables</h3>
+                    {occupiedTableBookings.length > 0 ? (
+                        <div className="space-y-2">
+                            {occupiedTableBookings.map(({ table, booking }) => (
+                                <div key={table.id} className="flex items-center justify-between gap-3 bg-brand-accent/60 rounded-md p-3">
+                                    <div>
+                                        <p className="font-semibold">Table {table.label}</p>
+                                        <p className="text-sm text-gray-300">
+                                            {booking.guestName} • {booking.dateTime.toLocaleString()}
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => updateBookingStatus(restaurant.id, booking.id, BookingStatus.COMPLETED)}
+                                        className="bg-brand-green text-white px-3 py-1.5 text-sm font-semibold rounded-md hover:bg-green-700 transition-colors"
+                                    >
+                                        Mark as free
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-gray-400">No occupied tables right now.</p>
+                    )}
+                </div>
+
                  <h2 className="text-2xl font-bold mb-4">Live Floor Plan for {restaurant.name}</h2>
                 <div className="w-full h-[500px] bg-brand-primary rounded-lg relative overflow-hidden border-2 border-brand-accent">
                     {restaurant.layout.map(el => {
@@ -113,8 +159,17 @@ const AdminView: React.FC = () => {
                         }
                         
                         const now = new Date();
-                        const currentBooking = restaurant.bookings.find(b => b.tableId === el.id && (b.status === BookingStatus.CONFIRMED || b.status === BookingStatus.OCCUPIED) && b.dateTime <= now && new Date(b.dateTime.getTime() + 2*60*60*1000) > now);
-                        const isPending = restaurant.bookings.some(b => b.tableId === el.id && b.status === BookingStatus.PENDING);
+                        const currentBooking = restaurant.bookings
+                            .filter(
+                                b =>
+                                    b.tableId === el.id &&
+                                    (b.status === BookingStatus.CONFIRMED || b.status === BookingStatus.OCCUPIED) &&
+                                    b.dateTime <= now
+                            )
+                            .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime())[0];
+                        const isPending = restaurant.bookings.some(
+                            b => b.tableId === el.id && b.status === BookingStatus.PENDING && b.dateTime <= now
+                        );
                         
                         let statusColor = 'bg-brand-green/80';
                         if (currentBooking) statusColor = 'bg-brand-red/80 cursor-not-allowed';
