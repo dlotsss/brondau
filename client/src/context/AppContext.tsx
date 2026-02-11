@@ -16,14 +16,21 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { authenticateUser } = useData();
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [selectedRestaurantId, setSelectedRestaurantId] = useState<string | null>(null);
+  /* Initialize from localStorage */
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const storedUser = localStorage.getItem('currentUser');
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
+
+  const [selectedRestaurantId, setSelectedRestaurantId] = useState<string | null>(() => {
+    return localStorage.getItem('selectedRestaurantId');
+  });
 
   const login = async (role: UserRole, email?: string, password?: string, restaurantId?: string): Promise<User | null> => {
     if (role === 'GUEST') {
-      // FIX: Explicitly type `guestUser` as `User` to prevent TypeScript from inferring `role` as a generic `string`.
       const guestUser: User = { id: 'guest', email: '', role: 'GUEST', restaurantIds: [] };
       setCurrentUser(guestUser);
+      localStorage.setItem('currentUser', JSON.stringify(guestUser));
       return guestUser;
     }
 
@@ -33,8 +40,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     if (user) {
       setCurrentUser(user);
-       if (role === 'ADMIN') {
-        setSelectedRestaurantId(user.restaurantIds[0] || null);
+      localStorage.setItem('currentUser', JSON.stringify(user));
+
+      if (role === 'ADMIN') {
+        const rId = user.restaurantIds[0] || null;
+        setSelectedRestaurantId(rId);
+        if (rId) localStorage.setItem('selectedRestaurantId', rId);
       }
       return user;
     }
@@ -45,10 +56,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const logout = () => {
     setCurrentUser(null);
     setSelectedRestaurantId(null);
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('selectedRestaurantId');
   };
 
   const selectRestaurant = useCallback((restaurantId: string) => {
     setSelectedRestaurantId(restaurantId);
+    localStorage.setItem('selectedRestaurantId', restaurantId);
   }, []);
 
   const deselectRestaurant = () => {
@@ -56,12 +70,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const addRestaurantToCurrentUser = (restaurantId: string) => {
-      if (currentUser && currentUser.role === 'OWNER') {
-          setCurrentUser(prevUser => prevUser ? {
-              ...prevUser,
-              restaurantIds: [...prevUser.restaurantIds, restaurantId]
-          } : null);
-      }
+    if (currentUser && currentUser.role === 'OWNER') {
+      setCurrentUser(prevUser => prevUser ? {
+        ...prevUser,
+        restaurantIds: [...prevUser.restaurantIds, restaurantId]
+      } : null);
+    }
   };
 
   return (

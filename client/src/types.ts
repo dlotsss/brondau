@@ -28,7 +28,7 @@ export interface TableElement {
 }
 
 export interface DecoElement {
-  id:string;
+  id: string;
   type: 'wall' | 'bar' | 'plant';
   x: number;
   y: number;
@@ -53,8 +53,10 @@ export interface Booking {
 }
 
 export interface Restaurant {
-    id: string;
-    name: string;
-    layout: LayoutElement[];
-    bookings: Booking[];
+  id: string;
+  name: string;
+  photoUrl?: string; // Mapped from photo_url
+  address?: string;
+  layout: LayoutElement[];
+  bookings: Booking[];
 }

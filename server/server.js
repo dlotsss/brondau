@@ -17,23 +17,23 @@ app.use(express.json());
 app.post('/api/auth/owner', async (req, res) => {
   try {
     const { email, password } = req.body;
-    
+
     const result = await pool.query(
       'SELECT * FROM platform_owner WHERE email = $1',
       [email]
     );
-    
+
     if (result.rows.length === 0) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-    
+
     const user = result.rows[0];
     const validPassword = await bcrypt.compare(password, user.password_hash);
-    
+
     if (!validPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-    
+
     res.json({
       id: user.id,
       email: user.email,
@@ -49,14 +49,14 @@ app.post('/api/auth/owner', async (req, res) => {
 app.post('/api/auth/admin/restaurants', async (req, res) => {
   try {
     const { email } = req.body;
-    
+
     const result = await pool.query(`
       SELECT r.id, r.name 
       FROM admins a
       JOIN restaurants r ON a.restaurant_id = r.id
       WHERE a.email = $1
     `, [email]);
-    
+
     res.json(result.rows);
   } catch (error) {
     console.error('Get admin restaurants error:', error);
@@ -68,24 +68,24 @@ app.post('/api/auth/admin/restaurants', async (req, res) => {
 app.post('/api/auth/admin', async (req, res) => {
   try {
     const { email, password, restaurantId } = req.body;
-    
+
     // Точечная проверка: email + restaurant_id (использует индекс)
     const result = await pool.query(
       'SELECT * FROM admins WHERE email = $1 AND restaurant_id = $2',
       [email, restaurantId]
     );
-    
+
     if (result.rows.length === 0) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-    
+
     const admin = result.rows[0];
     const validPassword = await bcrypt.compare(password, admin.password_hash);
-    
+
     if (!validPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-    
+
     res.json({
       id: admin.id,
       email: admin.email,
@@ -114,11 +114,11 @@ app.get('/api/restaurants/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query('SELECT * FROM restaurants WHERE id = $1', [id]);
-    
+
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Restaurant not found' });
     }
-    
+
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Get restaurant error:', error);
@@ -144,12 +144,12 @@ app.put('/api/restaurants/:id/layout', async (req, res) => {
   try {
     const { id } = req.params;
     const { layout } = req.body;
-    
+
     const result = await pool.query(
       'UPDATE restaurants SET layout = $1 WHERE id = $2 RETURNING *',
       [JSON.stringify(layout), id]
     );
-    
+
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Update layout error:', error);
@@ -196,13 +196,29 @@ app.post('/api/restaurants/:restaurantId/bookings', async (req, res) => {
     if (existingBookingResult.rows.length > 0) {
       return res.status(409).json({ error: 'A booking for this phone number already exists' });
     }
-    
+
+    const doubleBookingResult = await pool.query(
+      `SELECT id
+       FROM bookings
+       WHERE restaurant_id = $1
+         AND table_id = $2
+         AND date_time > ($3::timestamp - INTERVAL '1 hour')
+         AND date_time < ($3::timestamp + INTERVAL '1 hour')
+         AND status IN ('PENDING', 'CONFIRMED', 'OCCUPIED')
+       LIMIT 1`,
+      [restaurantId, tableId, dateTime]
+    );
+
+    if (doubleBookingResult.rows.length > 0) {
+      return res.status(409).json({ error: 'This table is already booked near the selected time (1 hour buffer)' });
+    }
+
     const result = await pool.query(`
       INSERT INTO bookings (restaurant_id, table_id, table_label, guest_name, guest_phone, guest_count, date_time)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *
     `, [restaurantId, tableId, tableLabel, guestName, normalizedPhone, guestCount, dateTime]);
-    
+
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Create booking error:', error);
@@ -214,12 +230,12 @@ app.put('/api/bookings/:id/status', async (req, res) => {
   try {
     const { id } = req.params;
     const { status, declineReason } = req.body;
-    
+
     const result = await pool.query(
       'UPDATE bookings SET status = $1, decline_reason = $2 WHERE id = $3 RETURNING *',
       [status, declineReason || null, id]
     );
-    
+
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Update booking status error:', error);
@@ -238,7 +254,7 @@ app.post('/api/bookings/cleanup-expired', async (req, res) => {
         AND created_at < NOW() - INTERVAL '3 minutes'
       RETURNING *
     `);
-    
+
     res.json({ updated: result.rows.length, bookings: result.rows });
   } catch (error) {
     console.error('Cleanup expired bookings error:', error);
@@ -251,14 +267,14 @@ app.post('/api/bookings/cleanup-expired', async (req, res) => {
 app.post('/api/admins', async (req, res) => {
   try {
     const { restaurantId, email, password } = req.body;
-    
+
     const passwordHash = await bcrypt.hash(password, 10);
-    
+
     const result = await pool.query(
       'INSERT INTO admins (restaurant_id, email, password_hash) VALUES ($1, $2, $3) RETURNING id, restaurant_id, email',
       [restaurantId, email, passwordHash]
     );
-    
+
     res.json(result.rows[0]);
   } catch (error) {
     if (error.code === '23505') { // unique violation

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useData } from '../context/DataContext';
 import { Booking, BookingStatus, TableElement } from '../types';
 import { useApp } from '../context/AppContext';
+import BookingModal from '../components/BookingModal';
 
 const CountdownTimer: React.FC<{ createdAt: Date }> = ({ createdAt }) => {
     const [timeLeft, setTimeLeft] = useState(180);
@@ -17,7 +18,7 @@ const CountdownTimer: React.FC<{ createdAt: Date }> = ({ createdAt }) => {
         const intervalId = setInterval(updateTimer, 1000);
         return () => clearInterval(intervalId);
     }, [createdAt]);
-    
+
     const minutes = Math.floor(timeLeft / 60);
     const seconds = Math.floor(timeLeft % 60);
     const timeColor = timeLeft < 60 ? 'text-brand-red' : 'text-brand-yellow';
@@ -30,7 +31,7 @@ const BookingRequestCard: React.FC<{ booking: Booking; restaurantId: string }> =
     const { updateBookingStatus } = useData();
     const [reason, setReason] = useState('');
     const [isDeclining, setIsDeclining] = useState(false);
-    
+
     const handleDecline = () => {
         if (!reason.trim()) {
             alert("Please provide a reason for declining.");
@@ -44,16 +45,16 @@ const BookingRequestCard: React.FC<{ booking: Booking; restaurantId: string }> =
             <div className="flex justify-between items-center">
                 <h4 className="font-bold text-lg">Table {booking.tableLabel}</h4>
                 <div className="text-sm">
-                   Time Left: <CountdownTimer createdAt={booking.createdAt} />
+                    Time Left: <CountdownTimer createdAt={booking.createdAt} />
                 </div>
             </div>
             <p className="text-sm text-gray-300">{booking.guestName} ({booking.guestCount} guests)</p>
             <p className="text-sm text-gray-400">{booking.dateTime.toLocaleString()}</p>
-            
+
             {isDeclining ? (
-                 <div className="mt-4 space-y-2">
-                    <input 
-                        type="text" 
+                <div className="mt-4 space-y-2">
+                    <input
+                        type="text"
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
                         placeholder="Reason for declining"
@@ -77,7 +78,8 @@ const BookingRequestCard: React.FC<{ booking: Booking; restaurantId: string }> =
 const AdminView: React.FC = () => {
     const { selectedRestaurantId } = useApp();
     const { getRestaurant, updateBookingStatus } = useData();
-    
+    const [selectedTable, setSelectedTable] = useState<TableElement | null>(null);
+
     const restaurant = selectedRestaurantId ? getRestaurant(selectedRestaurantId) : null;
 
     const pendingBookings = useMemo(() => {
@@ -150,14 +152,48 @@ const AdminView: React.FC = () => {
                     )}
                 </div>
 
-                 <h2 className="text-2xl font-bold mb-4">Live Floor Plan for {restaurant.name}</h2>
+                <div className="bg-brand-primary rounded-lg border border-brand-accent p-4">
+                    <h3 className="text-xl font-semibold mb-3">Upcoming Bookings</h3>
+                    {restaurant.bookings.filter(b => b.status === BookingStatus.CONFIRMED && b.dateTime > new Date()).length > 0 ? (
+                        <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                            {restaurant.bookings
+                                .filter(b => b.status === BookingStatus.CONFIRMED && b.dateTime > new Date())
+                                .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())
+                                .map(booking => (
+                                    <div key={booking.id} className="flex items-center justify-between gap-3 bg-brand-accent/40 rounded-md p-3">
+                                        <div>
+                                            <p className="font-semibold">{booking.guestName} ({booking.guestCount} ppl)</p>
+                                            <p className="text-sm text-gray-300">
+                                                Table {booking.tableLabel} • {booking.dateTime.toLocaleString()}
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="text-xs px-2 py-1 bg-brand-green/20 text-brand-green rounded border border-brand-green/30">
+                                                Confirmed
+                                            </div>
+                                            <button
+                                                onClick={() => updateBookingStatus(restaurant.id, booking.id, BookingStatus.DECLINED, "Cancelled by Admin")}
+                                                className="bg-brand-red text-white px-2 py-1 text-xs font-semibold rounded hover:bg-red-700 transition-colors"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                        </div>
+                    ) : (
+                        <p className="text-gray-400">No upcoming bookings.</p>
+                    )}
+                </div>
+
+                <h2 className="text-2xl font-bold mb-4">Live Floor Plan for {restaurant.name}</h2>
                 <div className="w-full h-[500px] bg-brand-primary rounded-lg relative overflow-hidden border-2 border-brand-accent">
                     {restaurant.layout.map(el => {
                         if (el.type !== 'table') {
-                             const styles: { [key: string]: string } = { wall: 'bg-gray-500', bar: 'bg-yellow-800', plant: 'bg-green-700 rounded-full' };
-                             return <div key={el.id} style={{ left: `${el.x}px`, top: `${el.y}px`, width: `${(el as any).width}px`, height: `${(el as any).height}px` }} className={`absolute ${styles[el.type]}`} />
+                            const styles: { [key: string]: string } = { wall: 'bg-gray-500', bar: 'bg-yellow-800', plant: 'bg-green-700 rounded-full' };
+                            return <div key={el.id} style={{ left: `${el.x}px`, top: `${el.y}px`, width: `${(el as any).width}px`, height: `${(el as any).height}px` }} className={`absolute ${styles[el.type]}`} />
                         }
-                        
+
                         const now = new Date();
                         const currentBooking = restaurant.bookings
                             .filter(
@@ -170,7 +206,7 @@ const AdminView: React.FC = () => {
                         const isPending = restaurant.bookings.some(
                             b => b.tableId === el.id && b.status === BookingStatus.PENDING && b.dateTime <= now
                         );
-                        
+
                         let statusColor = 'bg-brand-green/80';
                         if (currentBooking) statusColor = 'bg-brand-red/80 cursor-not-allowed';
                         if (isPending) statusColor = 'bg-brand-yellow/80 cursor-wait';
@@ -178,10 +214,11 @@ const AdminView: React.FC = () => {
                         const shapeClasses = el.shape === 'circle' ? 'rounded-full w-12 h-12' : 'rounded-md w-14 h-14';
 
                         return (
-                            <div 
-                                key={el.id} 
-                                style={{ left: `${el.x}px`, top: `${el.y}px` }} 
-                                className={`absolute transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center font-bold text-white transition-colors ${shapeClasses} ${statusColor}`}
+                            <div
+                                key={el.id}
+                                style={{ left: `${el.x}px`, top: `${el.y}px` }}
+                                className={`absolute transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center font-bold text-white transition-colors ${shapeClasses} ${statusColor} cursor-pointer hover:scale-110 transition-transform`}
+                                onClick={() => setSelectedTable(el as TableElement)}
                             >
                                 {el.label}
                             </div>
@@ -189,6 +226,13 @@ const AdminView: React.FC = () => {
                     })}
                 </div>
             </div>
+            {selectedTable && (
+                <BookingModal
+                    table={selectedTable}
+                    restaurantId={restaurant.id}
+                    onClose={() => setSelectedTable(null)}
+                />
+            )}
         </div>
     );
 };

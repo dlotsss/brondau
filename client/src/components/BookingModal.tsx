@@ -21,8 +21,16 @@ const BookingModal: React.FC<BookingModalProps> = ({ table, restaurantId, onClos
     const [guestName, setGuestName] = useState('');
     const [guestPhone, setGuestPhone] = useState('');
     const [guestCount, setGuestCount] = useState<number>(2);
+    // Helper to get the next hour string (e.g., "15:00")
+    const getNextHourTime = () => {
+        const now = new Date();
+        const nextHour = new Date(now);
+        nextHour.setHours(now.getHours() + 1, 0, 0, 0);
+        return nextHour.toTimeString().slice(0, 5);
+    };
+
     const [bookingDate, setBookingDate] = useState(formatLocalDate(new Date()));
-    const [bookingTime, setBookingTime] = useState('19:00');
+    const [bookingTime, setBookingTime] = useState(getNextHourTime());
     const [error, setError] = useState('');
 
     const existingBookings = getRestaurant(restaurantId)
@@ -43,8 +51,22 @@ const BookingModal: React.FC<BookingModalProps> = ({ table, restaurantId, onClos
             minute: '2-digit',
         }).format(date);
 
+    // Update time when date changes (if today)
+    React.useEffect(() => {
+        const todayStr = formatLocalDate(new Date());
+        if (bookingDate === todayStr) {
+            const currentSelected = new Date(`${bookingDate}T${bookingTime}`);
+            const now = new Date();
+            if (currentSelected <= now) {
+                setBookingTime(getNextHourTime());
+            }
+        }
+    }, [bookingDate]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError('');
+
         if (!guestName || !guestPhone) {
             setError('Please fill in your name and phone number.');
             return;
@@ -53,9 +75,31 @@ const BookingModal: React.FC<BookingModalProps> = ({ table, restaurantId, onClos
             setError(`This table only accommodates up to ${table.seats} guests.`);
             return;
         }
-        setError('');
 
         const dateTime = new Date(`${bookingDate}T${bookingTime}`);
+        const now = new Date();
+
+        // Strict check: must be in future
+        if (dateTime <= now) {
+            setError('Booking time must be in the future.');
+            return;
+        }
+
+        // Strict check: if today, must be at least next hour (rounded up) logic from request?
+        // Request: "не раньше текущего, округленного до ближайшего целого часа"
+        // Meaning if 21:50, min is 22:00.
+        // My getNextHourTime does exactly this.
+
+        const minTime = new Date();
+        minTime.setHours(minTime.getHours() + 1, 0, 0, 0);
+        // If booking is tomorrow, this check doesn't apply the same way, but let's just use the dateTime > now check + specific today check if needed.
+        // Actually the request implies we can't book 21:55 if it's 21:50. We must wait for 22:00.
+
+        if (dateTime < minTime && bookingDate === formatLocalDate(new Date())) {
+            setError('Booking must be at least from the next hour.');
+            return;
+        }
+
         try {
             await addBooking(restaurantId, {
                 tableId: table.id,
@@ -80,7 +124,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ table, restaurantId, onClos
                 </div>
                 <form onSubmit={handleSubmit}>
                     <p className="text-gray-400 mb-6">For up to <span className="font-semibold text-white">{table.seats}</span> guests.</p>
-                    
+
                     {error && <p className="bg-red-900 border border-brand-red text-red-300 px-4 py-2 rounded-md mb-4 text-sm">{error}</p>}
 
                     <div className="space-y-4">

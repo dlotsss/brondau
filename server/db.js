@@ -1,6 +1,9 @@
 import pg from 'pg';
 
-const { Pool } = pg;
+const { Pool, types } = pg;
+
+// Force TIMESTAMP (1114) to be interpreted as UTC string
+types.setTypeParser(1114, (str) => str + 'Z');
 
 const pool = new Pool({
   user: 'avnadmin',
