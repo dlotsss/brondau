@@ -49,6 +49,10 @@ export const api = {
             method: 'POST',
             body: JSON.stringify({ email }),
         }),
+        getOwnerRestaurants: (email: string) => request<{ id: string, name: string }[]>('/auth/owner/restaurants', {
+            method: 'POST',
+            body: JSON.stringify({ email }),
+        }),
     },
     bookings: {
         updateStatus: (id: string, status: BookingStatus, declineReason?: string) => request<any>(`/bookings/${id}/status`, {

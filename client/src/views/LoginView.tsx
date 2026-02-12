@@ -7,14 +7,14 @@ import { UserRole } from '../types';
 
 const LoginView: React.FC = () => {
   const { login } = useApp();
-  const { getAdminRestaurants } = useData();
+  const { getAdminRestaurants, getOwnerRestaurants } = useData();
   const navigate = useNavigate();
 
   const [loginType, setLoginType] = useState<UserRole>('GUEST');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [adminRestaurants, setAdminRestaurants] = useState<{id: string, name: string}[]>([]);
+  const [adminRestaurants, setAdminRestaurants] = useState<{ id: string, name: string }[]>([]);
   const [selectedRestaurant, setSelectedRestaurant] = useState('');
   const [showRestaurantSelect, setShowRestaurantSelect] = useState(false);
 
@@ -26,7 +26,9 @@ const LoginView: React.FC = () => {
   }, [loginType, email]);
 
   const handleEmailCheck = async () => {
-    if (loginType === 'ADMIN' && email) {
+    if (!email) return;
+
+    if (loginType === 'ADMIN') {
       const restaurants = await getAdminRestaurants(email);
       if (restaurants.length > 0) {
         setAdminRestaurants(restaurants);
@@ -35,6 +37,15 @@ const LoginView: React.FC = () => {
       } else {
         setError('No restaurants found for this email');
       }
+    } else if (loginType === 'OWNER') {
+      const restaurants = await getOwnerRestaurants(email);
+      if (restaurants.length > 0) {
+        setAdminRestaurants(restaurants); // Reusing the state for simplicity
+        setShowRestaurantSelect(true);
+        setSelectedRestaurant(restaurants[0].id);
+      } else {
+        setError('No ownership found for this email');
+      }
     }
   };
 
@@ -42,18 +53,22 @@ const LoginView: React.FC = () => {
     e.preventDefault();
     setError('');
 
-    if (loginType === 'ADMIN' && !selectedRestaurant) {
+    if ((loginType === 'ADMIN' || loginType === 'OWNER') && !selectedRestaurant) {
       setError('Please select a restaurant');
       return;
     }
 
     const user = await login(loginType, email, password, selectedRestaurant);
     if (user) {
-        if(user.role === 'ADMIN') {
-            navigate(`/restaurant/${user.restaurantIds[0]}`);
+      if (user.role === 'ADMIN' || user.role === 'OWNER') {
+        if (user.restaurantIds.length === 1) {
+          navigate(`/restaurant/${user.restaurantIds[0]}`);
         } else {
-            navigate('/');
+          navigate('/');
         }
+      } else {
+        navigate('/');
+      }
     } else {
       setError('Invalid credentials. Please try again.');
     }
@@ -62,7 +77,7 @@ const LoginView: React.FC = () => {
   const handleGuestLogin = async () => {
     const success = await login('GUEST');
     if (success) {
-        navigate('/');
+      navigate('/');
     }
   };
 
@@ -77,11 +92,10 @@ const LoginView: React.FC = () => {
             <button
               key={role}
               onClick={() => setLoginType(role)}
-              className={`w-full py-2 text-sm font-semibold rounded-md transition-colors ${
-                loginType === role 
-                  ? 'bg-brand-blue text-white shadow' 
-                  : 'text-gray-300 hover:bg-brand-secondary'
-              }`}
+              className={`w-full py-2 text-sm font-semibold rounded-md transition-colors ${loginType === role
+                ? 'bg-brand-blue text-white shadow'
+                : 'text-gray-300 hover:bg-brand-secondary'
+                }`}
             >
               {role.charAt(0) + role.slice(1).toLowerCase()}
             </button>
@@ -111,7 +125,7 @@ const LoginView: React.FC = () => {
               />
             </div>
 
-            {loginType === 'ADMIN' && showRestaurantSelect && adminRestaurants.length > 0 && (
+            {(loginType === 'ADMIN' || loginType === 'OWNER') && showRestaurantSelect && adminRestaurants.length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Select Restaurant</label>
                 <select

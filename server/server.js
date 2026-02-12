@@ -13,10 +13,10 @@ app.use(express.json());
 
 // ============ AUTHENTICATION ============
 
-// Вход для Owner
+// Вход для Owner (теперь с выбором одного из своих ресторанов)
 app.post('/api/auth/owner', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, restaurantId } = req.body;
 
     const result = await pool.query(
       'SELECT * FROM platform_owner WHERE email = $1',
@@ -28,6 +28,14 @@ app.post('/api/auth/owner', async (req, res) => {
     }
 
     const user = result.rows[0];
+    const restaurantIds = user.restaurant_ids || [];
+
+    // Проверка соответствия выбранного ресторана
+    const hasAllAccess = restaurantIds.includes('all');
+    if (!hasAllAccess && !restaurantIds.includes(restaurantId)) {
+      return res.status(401).json({ error: 'Access denied for this restaurant' });
+    }
+
     const validPassword = await bcrypt.compare(password, user.password_hash);
 
     if (!validPassword) {
@@ -37,10 +45,43 @@ app.post('/api/auth/owner', async (req, res) => {
     res.json({
       id: user.id,
       email: user.email,
-      role: 'OWNER'
+      role: 'OWNER',
+      restaurantId: restaurantId // Возвращаем тот, который выбрали
     });
   } catch (error) {
     console.error('Owner login error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Получить список ресторанов для владельца
+app.post('/api/auth/owner/restaurants', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const ownerResult = await pool.query(
+      'SELECT restaurant_ids FROM platform_owner WHERE email = $1',
+      [email]
+    );
+
+    if (ownerResult.rows.length === 0) {
+      return res.json([]);
+    }
+
+    const restaurantIds = ownerResult.rows[0].restaurant_ids || [];
+
+    if (restaurantIds.includes('all')) {
+      const restaurants = await pool.query('SELECT id, name FROM restaurants ORDER BY name');
+      return res.json([{ id: 'all', name: 'All Restaurants (Admin Access)' }, ...restaurants.rows]);
+    } else {
+      const restaurants = await pool.query(
+        'SELECT id, name FROM restaurants WHERE id = ANY($1) ORDER BY name',
+        [restaurantIds]
+      );
+      return res.json(restaurants.rows);
+    }
+  } catch (error) {
+    console.error('Get owner restaurants error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
