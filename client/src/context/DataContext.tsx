@@ -5,14 +5,15 @@ import { api } from '../services/api';
 interface DataContextType {
   restaurants: Restaurant[];
   getRestaurant: (id: string) => Restaurant | undefined;
-  authenticateUser: (email: string, pass: string, role: UserRole, restaurantId?: string) => Promise<User | undefined>;
+  authenticateUser: (email: string, password: string, role: UserRole, restaurantId?: string) => Promise<User | undefined>;
   getAdminRestaurants: (email: string) => Promise<{ id: string, name: string }[]>;
+  getOwnerRestaurants: (email: string) => Promise<{ id: string, name: string }[]>;
   addRestaurant: (name: string) => Promise<Restaurant | null>;
   addBooking: (restaurantId: string, bookingData: Omit<Booking, 'id' | 'restaurantId' | 'tableLabel' | 'status' | 'createdAt' | 'declineReason'>) => Promise<void>;
   updateBookingStatus: (restaurantId: string, bookingId: string, status: BookingStatus, reason?: string) => Promise<void>;
   updateLayout: (restaurantId: string, newLayout: LayoutElement[], floors?: any[]) => Promise<void>;
   loadRestaurants: () => Promise<void>;
-  loadRestaurantBookings: (restaurantId: string) => Promise<void>;
+  loadBookings: (restaurantId: string) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -74,7 +75,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  const loadRestaurantBookings = useCallback(async (restaurantId: string) => {
+  const loadBookings = useCallback(async (restaurantId: string) => {
     try {
       const bookings = await api.restaurants.getBookings(restaurantId);
 
@@ -112,6 +113,15 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
+  const getOwnerRestaurants = useCallback(async (email: string) => {
+    try {
+      return await api.auth.getOwnerRestaurants(email);
+    } catch (error) {
+      console.error('Failed to get owner restaurants:', error);
+      return [];
+    }
+  }, []);
+
   const authenticateUser = useCallback(async (
     email: string,
     password: string,
@@ -121,7 +131,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       let userData;
       if (role === 'OWNER') {
-        userData = await api.auth.owner({ email, password });
+        userData = await api.auth.owner({ email, password, restaurantId });
       } else {
         userData = await api.auth.admin({ email, password, restaurantId });
       }
@@ -130,10 +140,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         id: userData.id,
         email: userData.email,
         role: userData.role as UserRole,
-        restaurantIds: userData.restaurantId ? [userData.restaurantId] : []
+        restaurantIds: userData.restaurantId ? (userData.restaurantId === 'all' ? [] : [userData.restaurantId]) : []
       };
 
-      if (finalUser.role === 'OWNER') {
+      if (userData.restaurantId === 'all') {
         try {
           const allRestaurants = await api.restaurants.list();
           finalUser.restaurantIds = allRestaurants.map(r => r.id);
@@ -253,12 +263,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       await api.bookings.cleanupExpired();
 
       for (const r of restaurants) {
-        await loadRestaurantBookings(r.id);
+        await loadBookings(r.id);
       }
     }, 10000);
 
     return () => clearInterval(interval);
-  }, [restaurants, loadRestaurantBookings]);
+  }, [restaurants, loadBookings]);
 
   return (
     <DataContext.Provider value={{
@@ -266,12 +276,13 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       getRestaurant,
       authenticateUser,
       getAdminRestaurants,
+      getOwnerRestaurants,
       addRestaurant,
       addBooking,
       updateBookingStatus,
       updateLayout,
       loadRestaurants,
-      loadRestaurantBookings
+      loadBookings
     }}>
       {children}
     </DataContext.Provider>

@@ -25,12 +25,26 @@ export interface TableElement {
   seats: number;
   shape: 'circle' | 'square';
   label: string;
+  width: number;
+  height: number;
+  floorId?: string;
+}
+
+export interface TextElement {
+  id: string;
+  type: 'text';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  label: string; // The text content
+  fontSize?: number;
   floorId?: string;
 }
 
 export interface DecoElement {
   id: string;
-  type: 'wall' | 'bar' | 'plant' | 'window';
+  type: 'wall' | 'bar' | 'plant' | 'window' | 'arrow' | 'stairs';
   x: number;
   y: number;
   width: number;
@@ -38,7 +52,7 @@ export interface DecoElement {
   floorId?: string;
 }
 
-export type LayoutElement = TableElement | DecoElement;
+export type LayoutElement = TableElement | DecoElement | TextElement;
 
 export interface Floor {
   id: string;

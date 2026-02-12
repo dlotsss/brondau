@@ -42,10 +42,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setCurrentUser(user);
       localStorage.setItem('currentUser', JSON.stringify(user));
 
-      if (role === 'ADMIN') {
-        const rId = user.restaurantIds[0] || null;
+      if (role === 'ADMIN' || role === 'OWNER') {
+        const rId = user.restaurantIds.length === 1 ? user.restaurantIds[0] : null;
         setSelectedRestaurantId(rId);
         if (rId) localStorage.setItem('selectedRestaurantId', rId);
+        else localStorage.removeItem('selectedRestaurantId');
       }
       return user;
     }

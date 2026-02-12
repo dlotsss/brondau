@@ -205,6 +205,12 @@ const BookingModal: React.FC<BookingModalProps> = ({ table, restaurantId, onClos
             setError('Please fill in your name and phone number.');
             return;
         }
+
+        const phoneDigits = guestPhone.replace(/\D/g, '');
+        if (phoneDigits.length !== 11) { // 7 + 10 digits
+            setError('Please enter a valid phone number: +7 (XXX) XXX-XX-XX');
+            return;
+        }
         if (guestCount > table.seats) {
             setError(`This table only accommodates up to ${table.seats} guests.`);
             return;
@@ -302,7 +308,26 @@ const BookingModal: React.FC<BookingModalProps> = ({ table, restaurantId, onClos
                             )}
                         </div>
                         <input type="text" placeholder="Your Name" value={guestName} onChange={e => setGuestName(e.target.value)} className="w-full bg-brand-accent p-3 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-blue" required />
-                        <input type="tel" placeholder="Phone Number" value={guestPhone} onChange={e => setGuestPhone(e.target.value)} className="w-full bg-brand-accent p-3 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-blue" required />
+                        <input
+                            type="tel"
+                            placeholder="+7 (___) ___-__-__"
+                            value={guestPhone}
+                            onChange={e => {
+                                let val = e.target.value.replace(/\D/g, '');
+                                if (val.startsWith('7')) val = val.slice(1);
+                                if (val.length > 10) val = val.slice(0, 10);
+
+                                let formatted = '+7';
+                                if (val.length > 0) formatted += ` (${val.slice(0, 3)}`;
+                                if (val.length >= 3) formatted += `) ${val.slice(3, 6)}`;
+                                if (val.length >= 6) formatted += `-${val.slice(6, 8)}`;
+                                if (val.length >= 8) formatted += `-${val.slice(8, 10)}`;
+
+                                setGuestPhone(formatted);
+                            }}
+                            className="w-full bg-brand-accent p-3 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-blue"
+                            required
+                        />
 
                         <div className="flex items-center space-x-4">
                             <label className="text-gray-300 w-20">Guests:</label>

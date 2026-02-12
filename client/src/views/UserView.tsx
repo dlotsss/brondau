@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useData } from '../context/DataContext';
-import { LayoutElement, TableElement, BookingStatus, DecoElement } from '../types';
+import { LayoutElement, TableElement, BookingStatus, DecoElement, TextElement } from '../types';
 import BookingModal from '../components/BookingModal';
 import { useApp } from '../context/AppContext';
 
@@ -28,24 +28,69 @@ const Table: React.FC<{ table: TableElement; status: string; onClick: () => void
 };
 
 
-const Deco: React.FC<{ element: DecoElement }> = ({ element }) => {
-    const styles: { [key: string]: string } = {
-        wall: 'bg-gray-500',
-        bar: 'bg-yellow-800 border-2 border-yellow-900',
-        plant: 'bg-emerald-900 border-2 border-green-500 rounded-full',
-        window: 'bg-sky-200/40 border-2 border-sky-300'
+const Deco: React.FC<{ element: LayoutElement }> = ({ element }) => {
+    if (element.type === 'table') return null;
+
+    const baseStyles = {
+        left: `${element.x}px`, top: `${element.y}px`,
+        width: `${element.width}px`,
+        height: `${element.height}px`
     };
+
+    let content = null;
+    let classes = `absolute transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center`;
+
+    if (element.type === 'text') {
+        const textEl = element as TextElement;
+        classes += ` bg-transparent text-center leading-tight overflow-hidden text-white`;
+        content = <div style={{ fontSize: `${textEl.fontSize || 16}px` }} className="w-full h-full flex items-center justify-center p-1">{textEl.label}</div>;
+    } else if (element.type === 'arrow') {
+        classes += ` text-white`;
+        content = (
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
+                <path d="M12 2L12 22M12 2L5 9M12 2L19 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+        );
+    } else if (element.type === 'stairs') {
+        classes += ` bg-gray-300`;
+        content = (
+            <div className="w-full h-full flex flex-col justify-evenly">
+                {[...Array(5)].map((_, i) => <div key={i} className="w-full h-px bg-gray-500"></div>)}
+            </div>
+        );
+    } else if (element.type === 'plant') {
+        classes += ` bg-transparent`;
+        content = (
+            <div className="relative w-full h-full flex items-center justify-center">
+                <div className="absolute w-2/3 h-2/3 bg-emerald-800 rounded-full"></div>
+                <div className="absolute w-full h-full flex items-center justify-center">
+                    {/* Leaves */}
+                    <div className="w-full h-1/3 bg-green-500 absolute top-0 rounded-full opacity-75 transform rotate-45"></div>
+                    <div className="w-full h-1/3 bg-green-500 absolute top-0 rounded-full opacity-75 transform -rotate-45"></div>
+                    <div className="w-1/3 h-full bg-green-500 absolute left-0 rounded-full opacity-75 transform rotate-45"></div>
+                    <div className="w-1/3 h-full bg-green-500 absolute left-0 rounded-full opacity-75 transform -rotate-45"></div>
+                </div>
+            </div>
+        );
+    } else {
+        const decoStyles: { [key: string]: string } = {
+            wall: 'bg-gray-500',
+            bar: 'bg-yellow-800 border-2 border-yellow-900',
+            window: 'bg-sky-200/40 border-2 border-sky-300'
+        };
+        classes += ` ${decoStyles[(element as DecoElement).type] || 'bg-gray-400'}`;
+
+        if (element.type === 'window') {
+            content = <div className="w-full h-full flex items-center justify-center"><div className="w-0.5 h-full bg-sky-300/50"></div></div>;
+        }
+    }
 
     return (
         <div
-            style={{
-                left: `${element.x}px`, top: `${element.y}px`,
-                width: `${element.width}px`,
-                height: `${element.height}px`
-            }}
-            className={`absolute transform -translate-x-1/2 -translate-y-1/2 ${styles[element.type]}`}
+            style={baseStyles}
+            className={classes}
         >
-            {element.type === 'window' && <div className="w-full h-full flex items-center justify-center"><div className="w-0.5 h-full bg-sky-300/50"></div></div>}
+            {content}
         </div>
     );
 }

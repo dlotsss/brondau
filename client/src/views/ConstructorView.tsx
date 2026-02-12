@@ -1,13 +1,24 @@
 
 import React, { useState, useRef, MouseEvent as ReactMouseEvent, useCallback, useEffect } from 'react';
 import { useData } from '../context/DataContext';
-import { LayoutElement, TableElement, DecoElement, Floor } from '../types';
+import { LayoutElement, TableElement, DecoElement, TextElement, Floor } from '../types';
 import { useApp } from '../context/AppContext';
 
 type DraggableItem = {
     id: string;
     offsetX: number;
     offsetY: number;
+};
+
+type ResizableItem = {
+    id: string;
+    direction: 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
+    startMouseX: number;
+    startMouseY: number;
+    startWidth: number;
+    startHeight: number;
+    startX: number;
+    startY: number;
 };
 
 const ConstructorView: React.FC = () => {
@@ -21,7 +32,9 @@ const ConstructorView: React.FC = () => {
     const [isInitialized, setIsInitialized] = useState(false);
 
     const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
+
     const draggableRef = useRef<DraggableItem | null>(null);
+    const resizableRef = useRef<ResizableItem | null>(null);
     const canvasRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -48,7 +61,63 @@ const ConstructorView: React.FC = () => {
         setSelectedElementId(id);
     };
 
+    const handleResizeStart = (e: ReactMouseEvent<HTMLDivElement>, id: string, direction: ResizableItem['direction']) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const element = elements.find(el => el.id === id);
+        if (!element) return;
+
+        resizableRef.current = {
+            id,
+            direction,
+            startMouseX: e.clientX,
+            startMouseY: e.clientY,
+            startWidth: element.width,
+            startHeight: element.height,
+            startX: element.x,
+            startY: element.y
+        };
+    };
+
     const handleMouseMove = useCallback((e: globalThis.MouseEvent) => {
+        if (resizableRef.current && canvasRef.current) {
+            const { id, direction, startMouseX, startMouseY, startWidth, startHeight, startX, startY } = resizableRef.current;
+            const deltaX = e.clientX - startMouseX;
+            const deltaY = e.clientY - startMouseY;
+
+            setElements(prev => prev.map(el => {
+                if (el.id !== id) return el;
+
+                let newWidth = startWidth;
+                let newHeight = startHeight;
+                let newX = startX;
+                let newY = startY;
+
+                if (direction.includes('e')) {
+                    newWidth = Math.max(20, startWidth + deltaX);
+                    newX = startX + (newWidth - startWidth) / 2;
+                }
+                if (direction.includes('w')) {
+                    newWidth = Math.max(20, startWidth - deltaX);
+                    newX = startX - (newWidth - startWidth) / 2;
+                }
+                if (direction.includes('s')) {
+                    newHeight = Math.max(20, startHeight + deltaY);
+                    newY = startY + (newHeight - startHeight) / 2;
+                }
+                if (direction.includes('n')) {
+                    newHeight = Math.max(20, startHeight - deltaY);
+                    newY = startY - (newHeight - startHeight) / 2;
+                }
+
+                // Maintain Aspect Ratio for Plants if needed, or just let them stretch
+                // For now, free stretching is requested "stretching with mouse"
+
+                return { ...el, width: newWidth, height: newHeight, x: newX, y: newY };
+            }));
+            return;
+        }
+
         if (!draggableRef.current || !canvasRef.current) return;
 
         const { id, offsetX, offsetY } = draggableRef.current;
@@ -59,14 +128,16 @@ const ConstructorView: React.FC = () => {
 
         setElements(prev => prev.map(el => {
             if (el.id !== id) return el;
-            const pivotX = el.type === 'table' ? (el.shape === 'circle' ? 24 : 28) : (el as DecoElement).width / 2;
-            const pivotY = el.type === 'table' ? (el.shape === 'circle' ? 24 : 28) : (el as DecoElement).height / 2;
+            const pivotX = el.width / 2;
+            const pivotY = el.height / 2;
             return { ...el, x: newX - offsetX + pivotX, y: newY - offsetY + pivotY };
         }));
     }, []);
 
     const handleMouseUp = useCallback(() => {
+
         draggableRef.current = null;
+        resizableRef.current = null;
     }, []);
 
     useEffect(() => {
@@ -78,7 +149,7 @@ const ConstructorView: React.FC = () => {
         };
     }, [handleMouseMove, handleMouseUp]);
 
-    const addElement = (type: 'table-square' | 'table-circle' | 'wall' | 'bar' | 'plant' | 'window') => {
+    const addElement = (type: 'table-square' | 'table-circle' | 'wall' | 'bar' | 'plant' | 'window' | 'text' | 'arrow' | 'stairs') => {
         const newId = `el-${Date.now()}`;
         let newElement: LayoutElement;
 
@@ -88,18 +159,30 @@ const ConstructorView: React.FC = () => {
                 id: newId,
                 type: 'table',
                 x: 100, y: 100,
+                width: 60, height: 60,
                 seats: 4,
                 shape: type === 'table-square' ? 'square' : 'circle',
                 label: (tableCount + 1).toString(),
                 floorId: activeFloorId
             } as TableElement;
-        } else {
+        } else if (type === 'text') {
             newElement = {
                 id: newId,
-                type: type,
+                type: 'text',
                 x: 100, y: 100,
-                width: type === 'wall' || type === 'window' ? 100 : (type === 'bar' ? 150 : 40),
-                height: type === 'wall' || type === 'window' ? 10 : (type === 'bar' ? 50 : 40),
+                width: 100, height: 40,
+                label: 'New Text',
+                fontSize: 16,
+                floorId: activeFloorId
+            } as TextElement;
+        } else {
+            const isVertical = type === 'wall' || type === 'window';
+            newElement = {
+                id: newId,
+                type: type as any,
+                x: 100, y: 100,
+                width: isVertical ? 10 : (type === 'bar' ? 150 : (type === 'plant' ? 60 : (type === 'stairs' ? 80 : (type === 'arrow' ? 80 : 40)))),
+                height: isVertical ? 100 : (type === 'bar' ? 50 : (type === 'plant' ? 60 : (type === 'stairs' ? 80 : (type === 'arrow' ? 40 : 40)))),
                 floorId: activeFloorId
             } as DecoElement;
         }
@@ -149,6 +232,9 @@ const ConstructorView: React.FC = () => {
                     <button onClick={() => addElement('window')} className="bg-brand-accent p-3 rounded text-sm hover:bg-gray-600 transition-colors">Window</button>
                     <button onClick={() => addElement('bar')} className="bg-brand-accent p-3 rounded text-sm hover:bg-gray-600 transition-colors">Bar</button>
                     <button onClick={() => addElement('plant')} className="bg-brand-accent p-3 rounded text-sm hover:bg-gray-600 transition-colors">Plant</button>
+                    <button onClick={() => addElement('text')} className="bg-brand-accent p-3 rounded text-sm hover:bg-gray-600 transition-colors">Text</button>
+                    <button onClick={() => addElement('arrow')} className="bg-brand-accent p-3 rounded text-sm hover:bg-gray-600 transition-colors">Arrow</button>
+                    <button onClick={() => addElement('stairs')} className="bg-brand-accent p-3 rounded text-sm hover:bg-gray-600 transition-colors">Stairs</button>
                 </div>
 
                 <div className="flex-grow">
@@ -166,6 +252,14 @@ const ConstructorView: React.FC = () => {
                                 {'height' in selectedElement && <div><label className="text-gray-400">Height</label><input type="number" value={(selectedElement as DecoElement).height} onChange={e => updateSelectedElement('height', parseInt(e.target.value))} className="w-full bg-brand-secondary p-2 rounded mt-1 border border-gray-600" /></div>}
 
                                 <button onClick={deleteSelectedElement} className="w-full bg-brand-red/20 text-brand-red border border-brand-red/50 py-2 rounded-md hover:bg-brand-red hover:text-white transition-all mt-4 font-semibold uppercase text-xs tracking-wider">Delete Element</button>
+                            </div>
+                        </div>
+                    )}
+                    {selectedElement && selectedElement.type === 'text' && (
+                        <div className="border-t border-brand-accent pt-4 mt-4 animate-fade-in">
+                            <h4 className="font-bold text-lg mb-2">Text Properties</h4>
+                            <div className="space-y-3 text-sm">
+                                <div><label className="text-gray-400">Content</label><input type="text" value={(selectedElement as TextElement).label} onChange={e => updateSelectedElement('label', e.target.value)} className="w-full bg-brand-secondary p-2 rounded mt-1 border border-gray-600" /></div>
                             </div>
                         </div>
                     )}
@@ -197,34 +291,88 @@ const ConstructorView: React.FC = () => {
                             const isSelected = el.id === selectedElementId;
                             const baseStyles = {
                                 left: `${el.x}px`, top: `${el.y}px`,
+                                width: `${el.width}px`, height: `${el.height}px`,
                                 zIndex: isSelected ? 10 : 1,
                                 outline: isSelected ? '2px solid #3b82f6' : 'none',
                                 outlineOffset: '2px'
                             };
 
+                            let content = null;
+                            let classes = `absolute transform -translate-x-1/2 -translate-y-1/2 cursor-move shadow-sm group flex items-center justify-center pointer-events-auto`;
+
                             if (el.type === 'table') {
-                                const shapeClasses = el.shape === 'circle' ? 'rounded-full w-12 h-12' : 'rounded-md w-14 h-14';
-                                return <div key={el.id} style={baseStyles} onMouseDown={(e) => handleMouseDown(e, el.id)} className={`absolute transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center font-bold text-white bg-gray-500 cursor-move shadow-md ${shapeClasses}`}>
-                                    {(el as TableElement).label}
-                                </div>
+                                const shapeClasses = el.shape === 'circle' ? 'rounded-full' : 'rounded-md';
+                                classes += ` font-bold text-white bg-gray-500 shadow-md ${shapeClasses}`;
+                                content = (el as TableElement).label;
+                            } else if (el.type === 'text') {
+                                classes += ` bg-transparent border-dashed border border-gray-400 hover:border-solid`;
+                                content = <div style={{ fontSize: `${(el as TextElement).fontSize || 16}px` }} className="text-center w-full h-full overflow-hidden text-white leading-tight flex items-center justify-center p-1">{(el as TextElement).label}</div>;
+                            } else if (el.type === 'arrow') {
+                                classes += ` text-white`;
+                                content = (
+                                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
+                                        <path d="M12 2L12 22M12 2L5 9M12 2L19 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                );
+                            } else if (el.type === 'stairs') {
+                                classes += ` bg-gray-300`;
+                                content = (
+                                    <div className="w-full h-full flex flex-col justify-evenly">
+                                        {[...Array(5)].map((_, i) => <div key={i} className="w-full h-px bg-gray-500"></div>)}
+                                    </div>
+                                );
+                            } else if (el.type === 'plant') {
+                                classes += ` bg-transparent`;
+                                content = (
+                                    <div className="relative w-full h-full flex items-center justify-center">
+                                        <div className="absolute w-2/3 h-2/3 bg-emerald-800 rounded-full"></div>
+                                        <div className="absolute w-full h-full flex items-center justify-center">
+                                            {/* Leaves */}
+                                            <div className="w-full h-1/3 bg-green-500 absolute top-0 rounded-full opacity-75 transform rotate-45"></div>
+                                            <div className="w-full h-1/3 bg-green-500 absolute top-0 rounded-full opacity-75 transform -rotate-45"></div>
+                                            <div className="w-1/3 h-full bg-green-500 absolute left-0 rounded-full opacity-75 transform rotate-45"></div>
+                                            <div className="w-1/3 h-full bg-green-500 absolute left-0 rounded-full opacity-75 transform -rotate-45"></div>
+                                        </div>
+                                    </div>
+                                );
                             } else {
                                 const decoStyles: { [key: string]: string } = {
                                     wall: 'bg-gray-600',
                                     bar: 'bg-yellow-800 border-b-4 border-yellow-900',
-                                    plant: 'bg-emerald-900 border-2 border-green-500 rounded-full',
                                     window: 'bg-sky-200/40 border-2 border-sky-300'
                                 };
-                                return (
-                                    <div
-                                        key={el.id}
-                                        onMouseDown={(e) => handleMouseDown(e, el.id)}
-                                        style={{ ...baseStyles, width: `${(el as DecoElement).width}px`, height: `${(el as DecoElement).height}px` }}
-                                        className={`absolute transform -translate-x-1/2 -translate-y-1/2 cursor-move shadow-sm ${decoStyles[el.type]}`}
-                                    >
-                                        {el.type === 'window' && <div className="w-full h-full flex items-center justify-center"><div className="w-0.5 h-full bg-sky-300/50"></div></div>}
-                                    </div>
-                                );
+                                classes += ` ${decoStyles[el.type] || 'bg-gray-400'}`;
+                                if (el.type === 'window') {
+                                    content = <div className="w-full h-full flex items-center justify-center"><div className="w-0.5 h-full bg-sky-300/50"></div></div>;
+                                }
                             }
+
+                            return (
+                                <div
+                                    key={el.id}
+                                    onMouseDown={(e) => handleMouseDown(e, el.id)}
+                                    style={baseStyles}
+                                    className={classes}
+                                >
+                                    {content}
+
+                                    {isSelected && (
+                                        <>
+                                            {/* Corners */}
+                                            <div onMouseDown={(e) => handleResizeStart(e, el.id, 'nw')} className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border border-blue-500 rounded-full cursor-nw-resize z-20"></div>
+                                            <div onMouseDown={(e) => handleResizeStart(e, el.id, 'ne')} className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border border-blue-500 rounded-full cursor-ne-resize z-20"></div>
+                                            <div onMouseDown={(e) => handleResizeStart(e, el.id, 'sw')} className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border border-blue-500 rounded-full cursor-sw-resize z-20"></div>
+                                            <div onMouseDown={(e) => handleResizeStart(e, el.id, 'se')} className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border border-blue-500 rounded-full cursor-se-resize z-20"></div>
+
+                                            {/* Edges */}
+                                            <div onMouseDown={(e) => handleResizeStart(e, el.id, 'n')} className="absolute -top-1 left-1/2 -translate-x-1/2 w-full h-2 cursor-n-resize z-10"></div>
+                                            <div onMouseDown={(e) => handleResizeStart(e, el.id, 's')} className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-full h-2 cursor-s-resize z-10"></div>
+                                            <div onMouseDown={(e) => handleResizeStart(e, el.id, 'w')} className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-full cursor-w-resize z-10"></div>
+                                            <div onMouseDown={(e) => handleResizeStart(e, el.id, 'e')} className="absolute top-1/2 -right-1 -translate-y-1/2 w-2 h-full cursor-e-resize z-10"></div>
+                                        </>
+                                    )}
+                                </div>
+                            );
                         })}
                     </div>
                 </div>

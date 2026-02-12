@@ -14,7 +14,7 @@ const Header: React.FC = () => {
         logout();
         navigate('/login');
     };
-    
+
     const handleChangeRestaurant = () => {
         deselectRestaurant();
         navigate('/');
@@ -23,7 +23,7 @@ const Header: React.FC = () => {
     return (
         <header className="bg-brand-primary shadow-lg p-4 flex justify-between items-center">
             <div className="flex items-center">
-                 <h1 className="text-xl md:text-2xl font-bold text-white flex items-center">
+                <h1 className="text-xl md:text-2xl font-bold text-white flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-brand-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -42,7 +42,7 @@ const Header: React.FC = () => {
                 <span className="text-gray-300 text-sm hidden sm:block">
                     {currentUser?.email}
                 </span>
-                 <button
+                <button
                     onClick={handleChangeRestaurant}
                     className="flex items-center px-3 py-2 text-sm font-semibold bg-brand-accent text-white rounded-md hover:bg-brand-blue transition-colors duration-200"
                     title="Change Restaurant"
