@@ -143,12 +143,20 @@ app.post('/api/restaurants', async (req, res) => {
 app.put('/api/restaurants/:id/layout', async (req, res) => {
   try {
     const { id } = req.params;
-    const { layout } = req.body;
+    const { layout, floors } = req.body;
 
-    const result = await pool.query(
-      'UPDATE restaurants SET layout = $1 WHERE id = $2 RETURNING *',
-      [JSON.stringify(layout), id]
-    );
+    let columns = ['layout = $1'];
+    let params = [JSON.stringify(layout)];
+
+    if (floors) {
+      columns.push('floors = $2');
+      params.push(JSON.stringify(floors));
+    }
+
+    const query = `UPDATE restaurants SET ${columns.join(', ')} WHERE id = $${params.length + 1} RETURNING *`;
+    params.push(id);
+
+    const result = await pool.query(query, params);
 
     res.json(result.rows[0]);
   } catch (error) {
@@ -183,6 +191,84 @@ app.post('/api/restaurants/:restaurantId/bookings', async (req, res) => {
       return res.status(400).json({ error: 'Phone number is required' });
     }
 
+    // 1. Fetch Restaurant Work Hours
+    const restaurantResult = await pool.query(
+      'SELECT work_starts, work_ends FROM restaurants WHERE id = $1',
+      [restaurantId]
+    );
+
+    if (restaurantResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Restaurant not found' });
+    }
+
+    const { work_starts, work_ends } = restaurantResult.rows[0];
+    // Default if null (though schema has defaults, good to be safe)
+    const startStr = work_starts || '10:00';
+    const endStr = work_ends || '23:00';
+
+    const bookingDate = new Date(dateTime);
+    const bookingH = bookingDate.getHours();
+    const bookingM = bookingDate.getMinutes();
+
+    const [startH, startM] = startStr.split(':').map(Number);
+    const [endH, endM] = endStr.split(':').map(Number);
+
+    // Determine Shift Context
+    // If booking time (e.g. 01:00) is earlier than start time (10:00), it *might* belong to previous day's shift (if ends next day).
+    // Logic: calculate ShiftStart relative to bookingDate.
+
+    let shiftStart = new Date(bookingDate);
+    shiftStart.setHours(startH, startM, 0, 0);
+
+    // If booking is 01:00 and start is 10:00, the 'same day' shift start is 10:00 (future).
+    // So this booking must belong to 'yesterday' shift.
+    // BUT we must verify if the restaurant actually operates overnight.
+    // Or if the booking is just invalid (too early).
+
+    // Simplest robust check:
+    // Construct candidates for ShiftStart: Same Day, or Previous Day.
+    // See which one contains the bookingDate.
+
+    let validShiftStart = null;
+    let validShiftEnd = null;
+
+    // Check "Today's" shift (relative to booking date)
+    let s1 = new Date(bookingDate);
+    s1.setHours(startH, startM, 0, 0);
+    let e1 = new Date(s1);
+    e1.setHours(endH, endM, 0, 0);
+    if (endH < startH || (endH === startH && endM < startM)) {
+      e1.setDate(e1.getDate() + 1); // Ends next day
+    }
+
+    // Check "Yesterday's" shift
+    let s0 = new Date(s1);
+    s0.setDate(s0.getDate() - 1);
+    let e0 = new Date(s0); // Start from s0 base
+    e0.setHours(endH, endM, 0, 0);
+    if (endH < startH || (endH === startH && endM < startM)) {
+      e0.setDate(e0.getDate() + 1);
+    }
+
+    if (bookingDate >= s1 && bookingDate < e1) {
+      validShiftStart = s1;
+      validShiftEnd = e1;
+    } else if (bookingDate >= s0 && bookingDate < e0) {
+      validShiftStart = s0;
+      validShiftEnd = e0;
+    }
+
+    if (!validShiftStart) {
+      return res.status(400).json({ error: `Booking time must be within working hours (${startStr} - ${endStr})` });
+    }
+
+    // 1.5 Challenge: Must be at least 1 hour before closing
+    const lastPossibleBooking = new Date(validShiftEnd.getTime() - 60 * 60 * 1000);
+    if (bookingDate > lastPossibleBooking) {
+      return res.status(400).json({ error: 'The last possible booking time is one hour before closing.' });
+    }
+
+    // 2. Existing Booking Validation (Phone)
     const existingBookingResult = await pool.query(
       `SELECT id
        FROM bookings
@@ -197,6 +283,30 @@ app.post('/api/restaurants/:restaurantId/bookings', async (req, res) => {
       return res.status(409).json({ error: 'A booking for this phone number already exists' });
     }
 
+    // 3. "Rest of Day" Block Check:
+    // Check for any booking on this table in the SAME SHIFT that is BEFORE or AT the requested time.
+    // Effectively, finding a booking at T_exist <= T_new means T_new is blocked.
+    const restOfDayBlockResult = await pool.query(
+      `SELECT id
+       FROM bookings
+       WHERE restaurant_id = $1
+         AND table_id = $2
+         AND date_time >= $3
+         AND date_time <= $4
+         AND status IN ('PENDING', 'CONFIRMED', 'OCCUPIED')
+       LIMIT 1`,
+      [restaurantId, tableId, validShiftStart, dateTime]
+    );
+
+    if (restOfDayBlockResult.rows.length > 0) {
+      return res.status(409).json({ error: 'This table is already occupied by an earlier booking for the rest of the day.' });
+    }
+
+    // 4. Overlap Check (Forward looking / Vicinity)
+    // We strictly need to prevent cases where new booking starts BEFORE existing one but overlaps.
+    // E.g. New=18:00. Existing=18:30.
+    // "Rest of Day" check looks for <= 18:00. Finds nothing.
+    // But 18:00 overlaps 18:30 (buffer).
     const doubleBookingResult = await pool.query(
       `SELECT id
        FROM bookings

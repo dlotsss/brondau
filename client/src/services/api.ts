@@ -26,9 +26,9 @@ export const api = {
             method: 'POST',
             body: JSON.stringify({ name }),
         }),
-        updateLayout: (id: string, layout: LayoutElement[]) => request<Restaurant>(`/restaurants/${id}/layout`, {
+        updateLayout: (restaurantId: string, newLayout: LayoutElement[], floors?: any[]) => request<void>(`/restaurants/${restaurantId}/layout`, {
             method: 'PUT',
-            body: JSON.stringify({ layout }),
+            body: JSON.stringify({ layout: newLayout, floors }),
         }),
         getBookings: (id: string) => request<any[]>((`/restaurants/${id}/bookings`)),
         createBooking: (id: string, data: any) => request<any>(`/restaurants/${id}/bookings`, {

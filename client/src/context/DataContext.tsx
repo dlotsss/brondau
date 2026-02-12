@@ -10,7 +10,7 @@ interface DataContextType {
   addRestaurant: (name: string) => Promise<Restaurant | null>;
   addBooking: (restaurantId: string, bookingData: Omit<Booking, 'id' | 'restaurantId' | 'tableLabel' | 'status' | 'createdAt' | 'declineReason'>) => Promise<void>;
   updateBookingStatus: (restaurantId: string, bookingId: string, status: BookingStatus, reason?: string) => Promise<void>;
-  updateLayout: (restaurantId: string, newLayout: LayoutElement[]) => Promise<void>;
+  updateLayout: (restaurantId: string, newLayout: LayoutElement[], floors?: any[]) => Promise<void>;
   loadRestaurants: () => Promise<void>;
   loadRestaurantBookings: (restaurantId: string) => Promise<void>;
 }
@@ -36,7 +36,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               name: restaurant.name,
               photoUrl: restaurant.photo_url,
               address: restaurant.address,
+              workStarts: restaurant.work_starts,
+              workEnds: restaurant.work_ends,
               layout: restaurant.layout || [],
+              floors: restaurant.floors || [],
               bookings: bookings.map((b: any) => ({
                 id: b.id,
                 restaurantId: b.restaurant_id,
@@ -58,6 +61,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               id: restaurant.id,
               name: restaurant.name,
               layout: restaurant.layout || [],
+              floors: restaurant.floors || [],
               bookings: []
             };
           }
@@ -168,12 +172,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  const updateLayout = useCallback(async (restaurantId: string, newLayout: LayoutElement[]) => {
+  const updateLayout = useCallback(async (restaurantId: string, newLayout: LayoutElement[], floors?: any[]) => {
     try {
-      await api.restaurants.updateLayout(restaurantId, newLayout);
+      await api.restaurants.updateLayout(restaurantId, newLayout, floors);
 
       setRestaurants(prev => prev.map(r =>
-        r.id === restaurantId ? { ...r, layout: newLayout } : r
+        r.id === restaurantId ? { ...r, layout: newLayout, ...(floors ? { floors } : {}) } : r
       ));
     } catch (error) {
       console.error('Failed to update layout', error);

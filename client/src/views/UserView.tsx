@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import { LayoutElement, TableElement, BookingStatus, DecoElement } from '../types';
 import BookingModal from '../components/BookingModal';
@@ -32,18 +32,21 @@ const Deco: React.FC<{ element: DecoElement }> = ({ element }) => {
     const styles: { [key: string]: string } = {
         wall: 'bg-gray-500',
         bar: 'bg-yellow-800 border-2 border-yellow-900',
-        plant: 'bg-green-700 rounded-full',
+        plant: 'bg-emerald-900 border-2 border-green-500 rounded-full',
+        window: 'bg-sky-200/40 border-2 border-sky-300'
     };
 
     return (
         <div
-            style={{ 
-                left: `${element.x}px`, top: `${element.y}px`, 
-                width: `${element.width}px`, 
+            style={{
+                left: `${element.x}px`, top: `${element.y}px`,
+                width: `${element.width}px`,
                 height: `${element.height}px`
             }}
-            className={`absolute ${styles[element.type]}`}
-        />
+            className={`absolute transform -translate-x-1/2 -translate-y-1/2 ${styles[element.type]}`}
+        >
+            {element.type === 'window' && <div className="w-full h-full flex items-center justify-center"><div className="w-0.5 h-full bg-sky-300/50"></div></div>}
+        </div>
     );
 }
 
@@ -51,8 +54,20 @@ const UserView: React.FC = () => {
     const { selectedRestaurantId } = useApp();
     const { getRestaurant } = useData();
     const [selectedTable, setSelectedTable] = useState<TableElement | null>(null);
+    const [activeFloorId, setActiveFloorId] = useState<string>('');
+    const [isInitialized, setIsInitialized] = useState(false);
 
     const restaurant = selectedRestaurantId ? getRestaurant(selectedRestaurantId) : null;
+
+    useEffect(() => {
+        if (restaurant && !isInitialized) {
+            const floors = restaurant.floors || [];
+            if (floors.length > 0) {
+                setActiveFloorId(floors[0].id);
+            }
+            setIsInitialized(true);
+        }
+    }, [restaurant, isInitialized]);
 
     const tableStatuses = useMemo(() => {
         if (!restaurant) return {};
@@ -79,7 +94,20 @@ const UserView: React.FC = () => {
             } else if (activeConfirmed) {
                 statuses[table.id] = 'confirmed';
             } else {
-                statuses[table.id] = 'available';
+                // Feature: Mark as 'confirmed' (red) if next booking is within 1 hour
+                const nextBooking = restaurant.bookings
+                    .filter(b =>
+                        b.tableId === table.id &&
+                        (b.status === BookingStatus.CONFIRMED || b.status === BookingStatus.OCCUPIED || b.status === BookingStatus.PENDING) &&
+                        b.dateTime > now
+                    )
+                    .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())[0];
+
+                if (nextBooking && (nextBooking.dateTime.getTime() - now.getTime()) < 60 * 60 * 1000) {
+                    statuses[table.id] = 'confirmed';
+                } else {
+                    statuses[table.id] = 'available';
+                }
             }
         });
         return statuses;
@@ -91,17 +119,36 @@ const UserView: React.FC = () => {
 
     return (
         <div className="bg-brand-primary p-6 rounded-lg shadow-xl">
-            <h2 className="text-3xl font-bold mb-2 text-white">Welcome to {restaurant.name}!</h2>
-            <p className="text-gray-400 mb-6">Click on an available green table to make a reservation.</p>
-
-            <div className="w-full h-[500px] bg-brand-secondary rounded-lg relative overflow-hidden border-2 border-brand-accent">
-                {restaurant.layout.map(element => 
-                    element.type === 'table' 
-                        ? <Table key={element.id} table={element as TableElement} status={tableStatuses[element.id] || 'available'} onClick={() => setSelectedTable(element as TableElement)} />
-                        : <Deco key={element.id} element={element as DecoElement} />
+            <div className="flex justify-between items-center mb-6">
+                <div>
+                    <h2 className="text-3xl font-bold text-white leading-tight">Welcome to {restaurant.name}!</h2>
+                    <p className="text-gray-400">Click on an available green table to make a reservation.</p>
+                </div>
+                {restaurant.floors && restaurant.floors.length > 1 && (
+                    <div className="flex bg-brand-secondary p-1 rounded-lg border border-brand-accent">
+                        {restaurant.floors.map(f => (
+                            <button
+                                key={f.id}
+                                onClick={() => setActiveFloorId(f.id)}
+                                className={`px-4 py-2 rounded-md text-sm font-semibold transition-all ${activeFloorId === f.id ? 'bg-brand-blue text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                            >
+                                {f.name}
+                            </button>
+                        ))}
+                    </div>
                 )}
             </div>
-             <div className="flex justify-center space-x-6 mt-4">
+
+            <div className="w-full h-[600px] bg-brand-secondary rounded-xl relative overflow-hidden border-2 border-brand-accent shadow-inner">
+                {restaurant.layout
+                    .filter(el => !activeFloorId || el.floorId === activeFloorId || !el.floorId)
+                    .map(element =>
+                        element.type === 'table'
+                            ? <Table key={element.id} table={element as TableElement} status={tableStatuses[element.id] || 'available'} onClick={() => setSelectedTable(element as TableElement)} />
+                            : <Deco key={element.id} element={element as DecoElement} />
+                    )}
+            </div>
+            <div className="flex justify-center space-x-6 mt-4">
                 <div className="flex items-center"><div className="w-4 h-4 rounded-full bg-brand-green mr-2"></div><span>Available</span></div>
                 <div className="flex items-center"><div className="w-4 h-4 rounded-full bg-brand-yellow mr-2"></div><span>Pending</span></div>
                 <div className="flex items-center"><div className="w-4 h-4 rounded-full bg-brand-red mr-2"></div><span>Booked</span></div>

@@ -25,18 +25,25 @@ export interface TableElement {
   seats: number;
   shape: 'circle' | 'square';
   label: string;
+  floorId?: string;
 }
 
 export interface DecoElement {
   id: string;
-  type: 'wall' | 'bar' | 'plant';
+  type: 'wall' | 'bar' | 'plant' | 'window';
   x: number;
   y: number;
   width: number;
   height: number;
+  floorId?: string;
 }
 
 export type LayoutElement = TableElement | DecoElement;
+
+export interface Floor {
+  id: string;
+  name: string;
+}
 
 export interface Booking {
   id: string;
@@ -57,6 +64,9 @@ export interface Restaurant {
   name: string;
   photoUrl?: string; // Mapped from photo_url
   address?: string;
+  workStarts?: string; // HH:MM
+  workEnds?: string; // HH:MM
   layout: LayoutElement[];
   bookings: Booking[];
+  floors?: Floor[];
 }

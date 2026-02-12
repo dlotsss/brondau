@@ -79,8 +79,20 @@ const AdminView: React.FC = () => {
     const { selectedRestaurantId } = useApp();
     const { getRestaurant, updateBookingStatus } = useData();
     const [selectedTable, setSelectedTable] = useState<TableElement | null>(null);
+    const [activeFloorId, setActiveFloorId] = useState<string>('');
+    const [isInitialized, setIsInitialized] = useState(false);
 
     const restaurant = selectedRestaurantId ? getRestaurant(selectedRestaurantId) : null;
+
+    useEffect(() => {
+        if (restaurant && !isInitialized) {
+            const floors = restaurant.floors || [];
+            if (floors.length > 0) {
+                setActiveFloorId(floors[0].id);
+            }
+            setIsInitialized(true);
+        }
+    }, [restaurant, isInitialized]);
 
     const pendingBookings = useMemo(() => {
         if (!restaurant) return [];
@@ -186,44 +198,89 @@ const AdminView: React.FC = () => {
                     )}
                 </div>
 
-                <h2 className="text-2xl font-bold mb-4">Live Floor Plan for {restaurant.name}</h2>
-                <div className="w-full h-[500px] bg-brand-primary rounded-lg relative overflow-hidden border-2 border-brand-accent">
-                    {restaurant.layout.map(el => {
-                        if (el.type !== 'table') {
-                            const styles: { [key: string]: string } = { wall: 'bg-gray-500', bar: 'bg-yellow-800', plant: 'bg-green-700 rounded-full' };
-                            return <div key={el.id} style={{ left: `${el.x}px`, top: `${el.y}px`, width: `${(el as any).width}px`, height: `${(el as any).height}px` }} className={`absolute ${styles[el.type]}`} />
-                        }
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-bold">Live Floor Plan for {restaurant.name}</h2>
+                    {restaurant.floors && restaurant.floors.length > 1 && (
+                        <div className="flex bg-brand-secondary p-1 rounded-lg border border-brand-accent">
+                            {restaurant.floors.map(f => (
+                                <button
+                                    key={f.id}
+                                    onClick={() => setActiveFloorId(f.id)}
+                                    className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${activeFloorId === f.id ? 'bg-brand-blue text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                                >
+                                    {f.name}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+                <div className="w-full h-[600px] bg-brand-secondary rounded-xl relative overflow-hidden border-2 border-brand-accent shadow-inner">
+                    {restaurant.layout
+                        .filter(el => !activeFloorId || el.floorId === activeFloorId || !el.floorId)
+                        .map(el => {
+                            if (el.type !== 'table') {
+                                const styles: { [key: string]: string } = {
+                                    wall: 'bg-gray-500',
+                                    bar: 'bg-yellow-800 border-b-2 border-yellow-900',
+                                    plant: 'bg-emerald-900 border-2 border-green-500 rounded-full',
+                                    window: 'bg-sky-200/40 border-2 border-sky-300'
+                                };
+                                return (
+                                    <div
+                                        key={el.id}
+                                        style={{ left: `${el.x}px`, top: `${el.y}px`, width: `${(el as any).width}px`, height: `${(el as any).height}px` }}
+                                        className={`absolute transform -translate-x-1/2 -translate-y-1/2 ${styles[el.type]}`}
+                                    >
+                                        {el.type === 'window' && <div className="w-full h-full flex items-center justify-center"><div className="w-px h-full bg-sky-300/50"></div></div>}
+                                    </div>
+                                );
+                            }
 
-                        const now = new Date();
-                        const currentBooking = restaurant.bookings
-                            .filter(
-                                b =>
-                                    b.tableId === el.id &&
-                                    (b.status === BookingStatus.CONFIRMED || b.status === BookingStatus.OCCUPIED) &&
-                                    b.dateTime <= now
-                            )
-                            .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime())[0];
-                        const isPending = restaurant.bookings.some(
-                            b => b.tableId === el.id && b.status === BookingStatus.PENDING && b.dateTime <= now
-                        );
+                            const now = new Date();
+                            const currentBooking = restaurant.bookings
+                                .filter(
+                                    b =>
+                                        b.tableId === el.id &&
+                                        (b.status === BookingStatus.CONFIRMED || b.status === BookingStatus.OCCUPIED) &&
+                                        b.dateTime <= now
+                                )
+                                .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime())[0];
+                            const isPending = restaurant.bookings.some(
+                                b => b.tableId === el.id && b.status === BookingStatus.PENDING && b.dateTime <= now
+                            );
 
-                        let statusColor = 'bg-brand-green/80';
-                        if (currentBooking) statusColor = 'bg-brand-red/80 cursor-not-allowed';
-                        if (isPending) statusColor = 'bg-brand-yellow/80 cursor-wait';
+                            let statusColor = 'bg-brand-green/80';
+                            if (currentBooking) statusColor = 'bg-brand-red/80 cursor-not-allowed';
+                            if (isPending) statusColor = 'bg-brand-yellow/80 cursor-wait';
 
-                        const shapeClasses = el.shape === 'circle' ? 'rounded-full w-12 h-12' : 'rounded-md w-14 h-14';
+                            // Feature: Mark as red if next booking is within 1 hour
+                            if (!currentBooking && !isPending) {
+                                const nextBooking = restaurant.bookings
+                                    .filter(b =>
+                                        b.tableId === el.id &&
+                                        (b.status === BookingStatus.CONFIRMED || b.status === BookingStatus.OCCUPIED || b.status === BookingStatus.PENDING) &&
+                                        b.dateTime > now
+                                    )
+                                    .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())[0];
 
-                        return (
-                            <div
-                                key={el.id}
-                                style={{ left: `${el.x}px`, top: `${el.y}px` }}
-                                className={`absolute transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center font-bold text-white transition-colors ${shapeClasses} ${statusColor} cursor-pointer hover:scale-110 transition-transform`}
-                                onClick={() => setSelectedTable(el as TableElement)}
-                            >
-                                {el.label}
-                            </div>
-                        );
-                    })}
+                                if (nextBooking && (nextBooking.dateTime.getTime() - now.getTime()) < 60 * 60 * 1000) {
+                                    statusColor = 'bg-brand-red/80 cursor-not-allowed';
+                                }
+                            }
+
+                            const shapeClasses = el.shape === 'circle' ? 'rounded-full w-12 h-12' : 'rounded-md w-14 h-14';
+
+                            return (
+                                <div
+                                    key={el.id}
+                                    style={{ left: `${el.x}px`, top: `${el.y}px` }}
+                                    className={`absolute transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center font-bold text-white transition-colors ${shapeClasses} ${statusColor} cursor-pointer hover:scale-110 transition-transform`}
+                                    onClick={() => setSelectedTable(el as TableElement)}
+                                >
+                                    {el.label}
+                                </div>
+                            );
+                        })}
                 </div>
             </div>
             {selectedTable && (
