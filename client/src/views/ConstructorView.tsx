@@ -224,54 +224,54 @@ const ConstructorView: React.FC = () => {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <div className="lg:col-span-1 bg-brand-primary p-4 rounded-lg shadow-lg flex flex-col">
-                <h3 className="font-bold text-xl mb-4">Toolbox</h3>
+                <h3 className="font-bold text-xl mb-4">Инструменты</h3>
                 <div className="grid grid-cols-2 gap-2 mb-6">
-                    <button onClick={() => addElement('table-square')} className="bg-brand-accent p-3 rounded text-sm transition-colors" style={{ ':hover': { backgroundColor: '#c27d3e' } }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Square Table</button>
-                    <button onClick={() => addElement('table-circle')} className="bg-brand-accent p-3 rounded text-sm transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Circle Table</button>
-                    <button onClick={() => addElement('wall')} className="bg-brand-accent p-3 rounded text-sm transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Wall</button>
-                    <button onClick={() => addElement('window')} className="bg-brand-accent p-3 rounded text-sm transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Window</button>
-                    <button onClick={() => addElement('bar')} className="bg-brand-accent p-3 rounded text-sm transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Bar</button>
-                    <button onClick={() => addElement('plant')} className="bg-brand-accent p-3 rounded text-sm transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Plant</button>
-                    <button onClick={() => addElement('text')} className="bg-brand-accent p-3 rounded text-sm transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Text</button>
-                    <button onClick={() => addElement('arrow')} className="bg-brand-accent p-3 rounded text-sm transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Arrow</button>
-                    <button onClick={() => addElement('stairs')} className="bg-brand-accent p-3 rounded text-sm transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Stairs</button>
+                    <button onClick={() => addElement('table-square')} className="bg-brand-accent p-3 rounded text-sm transition-colors" style={{ ':hover': { backgroundColor: '#c27d3e' } }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Квадратный стол</button>
+                    <button onClick={() => addElement('table-circle')} className="bg-brand-accent p-3 rounded text-sm transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Круглый стол</button>
+                    <button onClick={() => addElement('wall')} className="bg-brand-accent p-3 rounded text-sm transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Стена</button>
+                    <button onClick={() => addElement('window')} className="bg-brand-accent p-3 rounded text-sm transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Окно</button>
+                    <button onClick={() => addElement('bar')} className="bg-brand-accent p-3 rounded text-sm transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Бар</button>
+                    <button onClick={() => addElement('plant')} className="bg-brand-accent p-3 rounded text-sm transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Растение</button>
+                    <button onClick={() => addElement('text')} className="bg-brand-accent p-3 rounded text-sm transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Текст</button>
+                    <button onClick={() => addElement('arrow')} className="bg-brand-accent p-3 rounded text-sm transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Стрелка</button>
+                    <button onClick={() => addElement('stairs')} className="bg-brand-accent p-3 rounded text-sm transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Лестница</button>
                 </div>
 
                 <div className="flex-grow">
                     {selectedElement && (
                         <div className="border-t border-brand-accent pt-4 animate-fade-in">
-                            <h4 className="font-bold text-lg mb-2">Properties</h4>
+                            <h4 className="font-bold text-lg mb-2">Свойства</h4>
                             <div className="space-y-3 text-sm">
                                 {selectedElement.type === 'table' && (
                                     <>
-                                        <div><label className="text-gray-400">Label</label><input type="text" value={(selectedElement as TableElement).label} onChange={e => updateSelectedElement('label', e.target.value)} className="w-full bg-brand-secondary p-2 rounded mt-1 border border-gray-600" /></div>
-                                        <div><label className="text-gray-400">Seats</label><input type="number" value={(selectedElement as TableElement).seats} onChange={e => updateSelectedElement('seats', parseInt(e.target.value))} className="w-full bg-brand-secondary p-2 rounded mt-1 border border-gray-600" /></div>
+                                        <div><label className="text-gray-400">Название</label><input type="text" value={(selectedElement as TableElement).label} onChange={e => updateSelectedElement('label', e.target.value)} className="w-full bg-brand-secondary p-2 rounded mt-1 border border-gray-600" /></div>
+                                        <div><label className="text-gray-400">Мест</label><input type="number" value={(selectedElement as TableElement).seats} onChange={e => updateSelectedElement('seats', parseInt(e.target.value))} className="w-full bg-brand-secondary p-2 rounded mt-1 border border-gray-600" /></div>
                                     </>
                                 )}
-                                {'width' in selectedElement && <div><label className="text-gray-400">Width</label><input type="number" value={(selectedElement as DecoElement).width} onChange={e => updateSelectedElement('width', parseInt(e.target.value))} className="w-full bg-brand-secondary p-2 rounded mt-1 border border-gray-600" /></div>}
-                                {'height' in selectedElement && <div><label className="text-gray-400">Height</label><input type="number" value={(selectedElement as DecoElement).height} onChange={e => updateSelectedElement('height', parseInt(e.target.value))} className="w-full bg-brand-secondary p-2 rounded mt-1 border border-gray-600" /></div>}
+                                {'width' in selectedElement && <div><label className="text-gray-400">Ширина</label><input type="number" value={(selectedElement as DecoElement).width} onChange={e => updateSelectedElement('width', parseInt(e.target.value))} className="w-full bg-brand-secondary p-2 rounded mt-1 border border-gray-600" /></div>}
+                                {'height' in selectedElement && <div><label className="text-gray-400">Высота</label><input type="number" value={(selectedElement as DecoElement).height} onChange={e => updateSelectedElement('height', parseInt(e.target.value))} className="w-full bg-brand-secondary p-2 rounded mt-1 border border-gray-600" /></div>}
 
-                                <button onClick={deleteSelectedElement} className="w-full bg-brand-red/20 text-brand-red border border-brand-red/50 py-2 rounded-md hover:bg-brand-red hover:text-white transition-all mt-4 font-semibold uppercase text-xs tracking-wider">Delete Element</button>
+                                <button onClick={deleteSelectedElement} className="w-full bg-brand-red/20 text-brand-red border border-brand-red/50 py-2 rounded-md hover:bg-brand-red hover:text-white transition-all mt-4 font-semibold uppercase text-xs tracking-wider">Удалить элемент</button>
                             </div>
                         </div>
                     )}
                     {selectedElement && selectedElement.type === 'text' && (
                         <div className="border-t border-brand-accent pt-4 mt-4 animate-fade-in">
-                            <h4 className="font-bold text-lg mb-2">Text Properties</h4>
+                            <h4 className="font-bold text-lg mb-2">Свойства текста</h4>
                             <div className="space-y-3 text-sm">
-                                <div><label className="text-gray-400">Content</label><input type="text" value={(selectedElement as TextElement).label} onChange={e => updateSelectedElement('label', e.target.value)} className="w-full bg-brand-secondary p-2 rounded mt-1 border border-gray-600" /></div>
+                                <div><label className="text-gray-400">Содержимое</label><input type="text" value={(selectedElement as TextElement).label} onChange={e => updateSelectedElement('label', e.target.value)} className="w-full bg-brand-secondary p-2 rounded mt-1 border border-gray-600" /></div>
                             </div>
                         </div>
                     )}
                 </div>
 
-                <button onClick={handleSaveLayout} className="w-full bg-brand-blue text-white font-bold py-3 mt-8 rounded-lg transition-colors shadow-lg" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d5b483'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Save Layout</button>
+                <button onClick={handleSaveLayout} className="w-full bg-brand-blue text-white font-bold py-3 mt-8 rounded-lg transition-colors shadow-lg" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d5b483'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Сохранить план</button>
             </div>
 
             <div className="lg:col-span-3">
                 <div className="flex flex-col h-full">
                     <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-2xl font-bold" style={{ color: '#2c1f14' }}>Layout Constructor for {restaurant.name}</h2>
+                        <h2 className="text-2xl font-bold" style={{ color: '#2c1f14' }}>Конструктор плана зала {restaurant.name}</h2>
                         <div className="flex items-center space-x-2 bg-brand-secondary p-1 rounded-md border border-brand-accent">
                             {floors.map(f => (
                                 <button

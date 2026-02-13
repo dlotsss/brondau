@@ -83,8 +83,8 @@ const LoginView: React.FC = () => {
   return (
     <div className="min-h-screen bg-brand-secondary flex items-center justify-center p-4">
       <div className="bg-brand-accent p-8 rounded-lg shadow-lg max-w-md w-full">
-        <h1 className="text-3xl font-bold text-white text-center mb-2">Welcome</h1>
-        <p className="text-center mb-6" style={{ color: '#f5efe6' }}>Please select your role to continue</p>
+        <h1 className="text-3xl font-bold text-white text-center mb-2">Добро пожаловать</h1>
+        <p className="text-center mb-6" style={{ color: '#f5efe6' }}>Пожалуйста, выберите вашу роль</p>
 
         <div className="flex gap-2 mb-6 rounded-md bg-brand-primary p-1">
           {(['GUEST', 'ADMIN', 'OWNER'] as UserRole[]).map(role => (
@@ -106,14 +106,14 @@ const LoginView: React.FC = () => {
             onClick={handleGuestLogin}
             className="w-full bg-brand-blue text-white font-semibold py-3 rounded-md transition" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d5b483'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}
           >
-            Enter as Guest
+            Войти как гость
           </button>
         ) : (
           <form onSubmit={handleLogin} className="space-y-4">
             {error && <div className="bg-brand-red/20 text-brand-red p-3 rounded-md text-sm">{error}</div>}
 
             <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: '#f5efe6' }}>Email</label>
+              <label className="block text-sm font-medium mb-2" style={{ color: '#f5efe6' }}>Электронная почта</label>
               <input
                 type="email"
                 value={email}
@@ -126,7 +126,7 @@ const LoginView: React.FC = () => {
 
             {(loginType === 'ADMIN' || loginType === 'OWNER') && showRestaurantSelect && adminRestaurants.length > 0 && (
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: '#f5efe6' }}>Select Restaurant</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: '#f5efe6' }}>Выберите ресторан</label>
                 <select
                   value={selectedRestaurant}
                   onChange={(e) => setSelectedRestaurant(e.target.value)}
@@ -143,7 +143,7 @@ const LoginView: React.FC = () => {
             )}
 
             <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: '#f5efe6' }}>Password</label>
+              <label className="block text-sm font-medium mb-2" style={{ color: '#f5efe6' }}>Пароль</label>
               <input
                 type="password"
                 value={password}
@@ -157,7 +157,7 @@ const LoginView: React.FC = () => {
               type="submit"
               className="w-full bg-brand-blue text-white font-semibold py-3 rounded-md transition" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d5b483'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}
             >
-              Login as {loginType.charAt(0) + loginType.slice(1).toLowerCase()}
+              Войти как {loginType === 'ADMIN' ? 'администратор' : loginType === 'OWNER' ? 'владелец' : 'гость'}
             </button>
           </form>
         )}

@@ -287,33 +287,33 @@ const BookingModal: React.FC<BookingModalProps> = ({ table, restaurantId, onClos
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 transition-opacity duration-300">
             <div className="bg-brand-secondary rounded-lg shadow-2xl p-8 w-full max-w-md m-4 transform transition-all duration-300 scale-95 animate-fade-in-up">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold" style={{ color: '#2c1f14' }}>Book Table <span className="text-brand-blue">{table.label}</span></h2>
+                    <h2 className="text-2xl font-bold" style={{ color: '#2c1f14' }}>Забронировать столик <span className="text-brand-blue">{table.label}</span></h2>
                     <button onClick={onClose} className="text-gray-400 text-3xl leading-none hover:text-white transition-colors">&times;</button>
                 </div>
                 <form onSubmit={handleSubmit}>
-                    <p className="text-gray-400 mb-6">For up to <span className="font-semibold" style={{ color: '#989ea8' }}>{table.seats}</span> guests.</p>
+                    <p className="text-gray-400 mb-6">До <span className="font-semibold" style={{ color: '#989ea8' }}>{table.seats}</span> гостей.</p>
 
                     {error && <p className="bg-red-900 border border-brand-red text-red-300 px-4 py-2 rounded-md mb-4 text-sm">{error}</p>}
 
                     <div className="space-y-4">
                         <div className="bg-brand-accent/70 p-3 rounded-md border border-gray-700">
-                            <p className="text-sm font-semibold text-white mb-2">Existing Bookings:</p>
+                            <p className="text-sm font-semibold text-white mb-2">Существующие бронирования:</p>
                             {visualBookings.length > 0 ? (
                                 <ul className="space-y-1 text-sm text-gray-200 max-h-28 overflow-y-auto pr-1">
                                     {visualBookings.map(booking => (
                                         <li key={booking.id} className="flex items-center justify-between">
                                             <span>{formatBookingSlot(booking.dateTime)}</span>
                                             <span className={`text-xs px-2 py-0.5 rounded-full ${booking.status === BookingStatus.PENDING ? 'bg-brand-yellow/30 text-brand-yellow' : 'bg-brand-red/30 text-brand-red'}`}>
-                                                {booking.status === BookingStatus.PENDING ? 'Pending' : 'Confirmed'}
+                                                {booking.status === BookingStatus.PENDING ? 'Ожидает' : 'Подтверждено'}
                                             </span>
                                         </li>
                                     ))}
                                 </ul>
                             ) : (
-                                <p className="text-sm text-gray-400">No active bookings for this table.</p>
+                                <p className="text-sm text-gray-400">Нет активных бронирований для этого столика.</p>
                             )}
                         </div>
-                        <input type="text" placeholder="Your Name" value={guestName} onChange={e => setGuestName(e.target.value)} className="w-full bg-brand-accent p-3 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-blue placeholder-[#f5efe6]" required />
+                        <input type="text" placeholder="Ваше имя" value={guestName} onChange={e => setGuestName(e.target.value)} className="w-full bg-brand-accent p-3 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-blue placeholder-[#f5efe6]" required />
                         <input
                             type="tel"
                             placeholder="+7 (___) ___-__-__"
@@ -336,17 +336,17 @@ const BookingModal: React.FC<BookingModalProps> = ({ table, restaurantId, onClos
                         />
 
                         <div className="flex items-center space-x-4">
-                            <label className="w-20" style={{ color: '#f5efe6' }}>Guests:</label>
+                            <label className="w-20" style={{ color: '#f5efe6' }}>Гостей:</label>
                             <input type="number" value={guestCount} onChange={e => setGuestCount(parseInt(e.target.value))} min="1" max={table.seats} className="w-full bg-brand-accent p-3 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-blue" />
                         </div>
 
                         <div className="flex items-center space-x-4">
-                            <label className="w-20" style={{ color: '#f5efe6' }}>Date:</label>
+                            <label className="w-20" style={{ color: '#f5efe6' }}>Дата:</label>
                             <input type="date" value={bookingDate} onChange={e => setBookingDate(e.target.value)} className="w-full bg-brand-accent p-3 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-blue" />
                         </div>
 
                         <div className="flex items-center space-x-4">
-                            <label className="w-20" style={{ color: '#f5efe6' }}>Time:</label>
+                            <label className="w-20" style={{ color: '#f5efe6' }}>Время:</label>
                             {availableSlots.length > 0 ? (
                                 <select
                                     value={bookingTime}
@@ -358,14 +358,14 @@ const BookingModal: React.FC<BookingModalProps> = ({ table, restaurantId, onClos
                                     ))}
                                 </select>
                             ) : (
-                                <div className="w-full p-3 text-red-400 text-sm">No slots available</div>
+                                <div className="w-full p-3 text-red-400 text-sm">Нет доступных слотов</div>
                             )}
                         </div>
                     </div>
 
                     <div className="mt-8 flex justify-end space-x-4">
-                        <button type="button" onClick={onClose} className="px-6 py-2 rounded-md bg-brand-accent text-white transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Cancel</button>
-                        <button type="submit" disabled={availableSlots.length === 0} className={`px-6 py-2 rounded-md text-white font-semibold transition-colors shadow-md ${availableSlots.length === 0 ? 'cursor-not-allowed' : 'bg-brand-blue'}`} style={availableSlots.length === 0 ? { backgroundColor: '#989ea8' } : undefined} onMouseEnter={(e) => { if (availableSlots.length > 0) e.currentTarget.style.backgroundColor = '#d5b483'; }} onMouseLeave={(e) => { if (availableSlots.length > 0) e.currentTarget.style.backgroundColor = ''; }}>Request Booking</button>
+                        <button type="button" onClick={onClose} className="px-6 py-2 rounded-md bg-brand-accent text-white transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Отмена</button>
+                        <button type="submit" disabled={availableSlots.length === 0} className={`px-6 py-2 rounded-md text-white font-semibold transition-colors shadow-md ${availableSlots.length === 0 ? 'cursor-not-allowed' : 'bg-brand-blue'}`} style={availableSlots.length === 0 ? { backgroundColor: '#989ea8' } : undefined} onMouseEnter={(e) => { if (availableSlots.length > 0) e.currentTarget.style.backgroundColor = '#d5b483'; }} onMouseLeave={(e) => { if (availableSlots.length > 0) e.currentTarget.style.backgroundColor = ''; }}>Запросить бронь</button>
                     </div>
                 </form>
             </div>

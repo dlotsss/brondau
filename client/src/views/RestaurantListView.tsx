@@ -68,10 +68,10 @@ const RestaurantCard: React.FC<{ restaurant: Restaurant; onSelect: () => void }>
                 <div className="flex items-center gap-2">
                     <span className={`w-3 h-3 rounded-full ${isFull ? 'bg-red-500' : 'bg-green-500'} animate-pulse`} />
                     <span className={`text-sm font-medium ${isFull ? 'text-red-400' : 'text-green-400'}`}>
-                        {isFull ? 'Full capacity' : `${freeTables} tables free`}
+                        {isFull ? 'Все столики заняты' : `${freeTables} свободных столика`}
                     </span>
                 </div>
-                <button className="text-brand-blue text-sm font-semibold group-hover:underline">View Details &rarr;</button>
+                <button className="text-brand-blue text-sm font-semibold group-hover:underline">Подробнее &rarr;</button>
             </div>
         </div>
     );
@@ -96,13 +96,13 @@ const AddRestaurantCard: React.FC<{ onAdd: (name: string) => void }> = ({ onAdd 
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="New Restaurant Name"
+                    placeholder="Название нового ресторана"
                     className="w-full bg-brand-secondary p-2 rounded-md mb-3"
                     autoFocus
                 />
                 <div className="flex space-x-2">
-                    <button onClick={handleAdd} className="w-full bg-brand-blue p-2 rounded-md text-sm font-semibold">Save</button>
-                    <button onClick={() => setIsAdding(false)} className="w-full bg-brand-accent p-2 rounded-md text-sm">Cancel</button>
+                    <button onClick={handleAdd} className="w-full bg-brand-blue p-2 rounded-md text-sm font-semibold">Сохранить</button>
+                    <button onClick={() => setIsAdding(false)} className="w-full bg-brand-accent p-2 rounded-md text-sm">Отмена</button>
                 </div>
             </div>
         );
@@ -115,7 +115,7 @@ const AddRestaurantCard: React.FC<{ onAdd: (name: string) => void }> = ({ onAdd 
         >
             <div className="text-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-                <h3 className="font-bold">Add New Restaurant</h3>
+                <h3 className="font-bold">Добавить новый ресторан</h3>
             </div>
         </div>
     );
@@ -141,9 +141,9 @@ const RestaurantListView: React.FC = () => {
     return (
         <div className="min-h-screen bg-brand-secondary p-8 animate-fade-in">
             <div className="max-w-4xl mx-auto">
-                <h1 className="text-4xl font-bold mb-2" style={{ color: '#2c1f14' }}>Select a Restaurant</h1>
+                <h1 className="text-4xl font-bold mb-2" style={{ color: '#2c1f14' }}>Выберите ресторан</h1>
                 <p className="text-gray-400 mb-8">
-                    {currentUser?.role === 'GUEST' ? "Choose a restaurant to view its floor plan and make a booking." : "Choose a restaurant to manage."}
+                    {currentUser?.role === 'GUEST' ? "Выберите ресторан для просмотра плана зала и бронирования." : "Выберите ресторан для управления."}
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

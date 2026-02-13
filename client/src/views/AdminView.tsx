@@ -62,14 +62,14 @@ const BookingRequestCard: React.FC<{ booking: Booking; restaurantId: string }> =
                         className="w-full bg-brand-primary p-2 rounded-md border border-gray-600 text-sm"
                     />
                     <div className="flex space-x-2">
-                        <button onClick={handleDecline} className="flex-1 bg-brand-red text-white px-3 py-1.5 text-sm rounded-md hover:bg-red-700">Confirm Decline</button>
-                        <button onClick={() => setIsDeclining(false)} className="bg-gray-500 text-white px-3 py-1.5 text-sm rounded-md hover:bg-gray-600">Cancel</button>
+                        <button onClick={handleDecline} className="flex-1 bg-brand-red text-white px-3 py-1.5 text-sm rounded-md hover:bg-red-700">Подтвердить отклонение</button>
+                        <button onClick={() => setIsDeclining(false)} className="bg-gray-500 text-white px-3 py-1.5 text-sm rounded-md hover:bg-gray-600">Отмена</button>
                     </div>
                 </div>
             ) : (
                 <div className="mt-4 flex space-x-2">
-                    <button onClick={() => updateBookingStatus(restaurantId, booking.id, BookingStatus.CONFIRMED)} className="flex-1 bg-brand-green text-white px-3 py-1.5 text-sm font-semibold rounded-md hover:bg-green-700 transition-colors">Confirm</button>
-                    <button onClick={() => setIsDeclining(true)} className="flex-1 bg-brand-red text-white px-3 py-1.5 text-sm font-semibold rounded-md hover:bg-red-700 transition-colors">Decline</button>
+                    <button onClick={() => updateBookingStatus(restaurantId, booking.id, BookingStatus.CONFIRMED)} className="flex-1 bg-brand-green text-white px-3 py-1.5 text-sm font-semibold rounded-md hover:bg-green-700 transition-colors">Подтвердить</button>
+                    <button onClick={() => setIsDeclining(true)} className="flex-1 bg-brand-red text-white px-3 py-1.5 text-sm font-semibold rounded-md hover:bg-red-700 transition-colors">Отклонить</button>
                 </div>
             )}
         </div>
@@ -140,18 +140,18 @@ const AdminView: React.FC = () => {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1">
-                <h2 className="text-2xl font-bold mb-4" style={{ color: '#2c1f14' }}>New Booking Requests</h2>
+                <h2 className="text-2xl font-bold mb-4" style={{ color: '#2c1f14' }}>Новые запросы на бронирование</h2>
                 <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
                     {pendingBookings.length > 0 ? (
                         pendingBookings.map(b => <BookingRequestCard key={b.id} booking={b} restaurantId={restaurant.id} />)
                     ) : (
-                        <p className="text-gray-400 text-center py-8">No pending requests.</p>
+                        <p className="text-gray-400 text-center py-8">Нет ожидающих запросов.</p>
                     )}
                 </div>
             </div>
             <div className="lg:col-span-2 space-y-6">
                 <div className="bg-brand-primary rounded-lg border border-brand-accent p-4">
-                    <h3 className="text-xl font-semibold mb-3">Occupied tables</h3>
+                    <h3 className="text-xl font-semibold mb-3">Занятые столики</h3>
                     {occupiedTableBookings.length > 0 ? (
                         <div className="space-y-2">
                             {occupiedTableBookings.map(({ table, booking }) => (
@@ -166,18 +166,18 @@ const AdminView: React.FC = () => {
                                         onClick={() => updateBookingStatus(restaurant.id, booking.id, BookingStatus.COMPLETED)}
                                         className="bg-brand-green text-white px-3 py-1.5 text-sm font-semibold rounded-md hover:bg-green-700 transition-colors"
                                     >
-                                        Mark as free
+                                        Освободить столик
                                     </button>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <p className="text-gray-400">No occupied tables right now.</p>
+                        <p className="text-gray-400">Сейчас нет занятых столиков.</p>
                     )}
                 </div>
 
                 <div className="bg-brand-primary rounded-lg border border-brand-accent p-4">
-                    <h3 className="text-xl font-semibold mb-3">Upcoming Bookings</h3>
+                    <h3 className="text-xl font-semibold mb-3">Предстоящие бронирования</h3>
                     {restaurant.bookings.filter(b => b.status === BookingStatus.CONFIRMED && b.dateTime > new Date()).length > 0 ? (
                         <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
                             {restaurant.bookings
@@ -193,25 +193,25 @@ const AdminView: React.FC = () => {
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <div className="text-xs px-2 py-1 bg-brand-green/20 text-brand-green rounded border border-brand-green/30">
-                                                Confirmed
+                                                Подтверждено
                                             </div>
                                             <button
                                                 onClick={() => updateBookingStatus(restaurant.id, booking.id, BookingStatus.DECLINED, "Cancelled by Admin")}
                                                 className="bg-brand-red text-white px-2 py-1 text-xs font-semibold rounded hover:bg-red-700 transition-colors"
                                             >
-                                                Cancel
+                                                Отменить
                                             </button>
                                         </div>
                                     </div>
                                 ))}
                         </div>
                     ) : (
-                        <p className="text-gray-400">No upcoming bookings.</p>
+                        <p className="text-gray-400">Нет предстоящих бронирований.</p>
                     )}
                 </div>
 
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold" style={{ color: '#2c1f14' }}>Live Floor Plan for {restaurant.name}</h2>
+                    <h2 className="text-2xl font-bold" style={{ color: '#2c1f14' }}>План зала {restaurant.name} в режиме реального времени</h2>
                     {restaurant.floors && restaurant.floors.length > 1 && (
                         <div className="flex bg-brand-secondary p-1 rounded-lg border border-brand-accent">
                             {restaurant.floors.map(f => (

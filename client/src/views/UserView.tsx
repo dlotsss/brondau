@@ -166,8 +166,8 @@ const UserView: React.FC = () => {
         <div className="bg-brand-primary p-6 rounded-lg shadow-xl">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h2 className="text-3xl font-bold text-white leading-tight">Welcome to {restaurant.name}!</h2>
-                    <p className="text-gray-400">Click on an available green table to make a reservation.</p>
+                    <h2 className="text-3xl font-bold text-white leading-tight">Добро пожаловать в {restaurant.name}!</h2>
+                    <p className="text-gray-400">Нажмите на свободный зеленый столик для бронирования.</p>
                 </div>
                 {restaurant.floors && restaurant.floors.length > 1 && (
                     <div className="flex bg-brand-secondary p-1 rounded-lg border border-brand-accent">
@@ -194,9 +194,9 @@ const UserView: React.FC = () => {
                     )}
             </div>
             <div className="flex justify-center space-x-6 mt-4">
-                <div className="flex items-center"><div className="w-4 h-4 rounded-full bg-brand-green mr-2"></div><span>Available</span></div>
-                <div className="flex items-center"><div className="w-4 h-4 rounded-full bg-brand-yellow mr-2"></div><span>Pending</span></div>
-                <div className="flex items-center"><div className="w-4 h-4 rounded-full bg-brand-red mr-2"></div><span>Booked</span></div>
+                <div className="flex items-center"><div className="w-4 h-4 rounded-full bg-brand-green mr-2"></div><span>Свободно</span></div>
+                <div className="flex items-center"><div className="w-4 h-4 rounded-full bg-brand-yellow mr-2"></div><span>Ожидает подтверждения</span></div>
+                <div className="flex items-center"><div className="w-4 h-4 rounded-full bg-brand-red mr-2"></div><span>Забронировано</span></div>
             </div>
 
             {selectedTable && selectedRestaurantId && <BookingModal table={selectedTable} restaurantId={selectedRestaurantId} onClose={() => setSelectedTable(null)} />}
