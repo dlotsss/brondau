@@ -42,10 +42,10 @@ const Deco: React.FC<{ element: LayoutElement }> = ({ element }) => {
 
     if (element.type === 'text') {
         const textEl = element as TextElement;
-        classes += ` bg-transparent text-center leading-tight overflow-hidden text-white`;
-        content = <div style={{ fontSize: `${textEl.fontSize || 16}px` }} className="w-full h-full flex items-center justify-center p-1">{textEl.label}</div>;
+        classes += ` bg-transparent text-center leading-tight overflow-hidden`;
+        content = <div style={{ fontSize: `${textEl.fontSize || 16}px`, color: '#2c1f14' }} className="w-full h-full flex items-center justify-center p-1">{textEl.label}</div>;
     } else if (element.type === 'arrow') {
-        classes += ` text-white`;
+        classes += ` text-[#2c1f14]`;
         content = (
             <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
                 <path d="M12 2L12 22M12 2L5 9M12 2L19 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

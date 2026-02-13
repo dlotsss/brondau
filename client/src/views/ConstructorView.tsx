@@ -226,15 +226,15 @@ const ConstructorView: React.FC = () => {
             <div className="lg:col-span-1 bg-brand-primary p-4 rounded-lg shadow-lg flex flex-col">
                 <h3 className="font-bold text-xl mb-4">Toolbox</h3>
                 <div className="grid grid-cols-2 gap-2 mb-6">
-                    <button onClick={() => addElement('table-square')} className="bg-brand-accent p-3 rounded text-sm hover:bg-gray-600 transition-colors">Square Table</button>
-                    <button onClick={() => addElement('table-circle')} className="bg-brand-accent p-3 rounded text-sm hover:bg-gray-600 transition-colors">Circle Table</button>
-                    <button onClick={() => addElement('wall')} className="bg-brand-accent p-3 rounded text-sm hover:bg-gray-600 transition-colors">Wall</button>
-                    <button onClick={() => addElement('window')} className="bg-brand-accent p-3 rounded text-sm hover:bg-gray-600 transition-colors">Window</button>
-                    <button onClick={() => addElement('bar')} className="bg-brand-accent p-3 rounded text-sm hover:bg-gray-600 transition-colors">Bar</button>
-                    <button onClick={() => addElement('plant')} className="bg-brand-accent p-3 rounded text-sm hover:bg-gray-600 transition-colors">Plant</button>
-                    <button onClick={() => addElement('text')} className="bg-brand-accent p-3 rounded text-sm hover:bg-gray-600 transition-colors">Text</button>
-                    <button onClick={() => addElement('arrow')} className="bg-brand-accent p-3 rounded text-sm hover:bg-gray-600 transition-colors">Arrow</button>
-                    <button onClick={() => addElement('stairs')} className="bg-brand-accent p-3 rounded text-sm hover:bg-gray-600 transition-colors">Stairs</button>
+                    <button onClick={() => addElement('table-square')} className="bg-brand-accent p-3 rounded text-sm transition-colors" style={{ ':hover': { backgroundColor: '#c27d3e' } }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Square Table</button>
+                    <button onClick={() => addElement('table-circle')} className="bg-brand-accent p-3 rounded text-sm transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Circle Table</button>
+                    <button onClick={() => addElement('wall')} className="bg-brand-accent p-3 rounded text-sm transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Wall</button>
+                    <button onClick={() => addElement('window')} className="bg-brand-accent p-3 rounded text-sm transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Window</button>
+                    <button onClick={() => addElement('bar')} className="bg-brand-accent p-3 rounded text-sm transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Bar</button>
+                    <button onClick={() => addElement('plant')} className="bg-brand-accent p-3 rounded text-sm transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Plant</button>
+                    <button onClick={() => addElement('text')} className="bg-brand-accent p-3 rounded text-sm transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Text</button>
+                    <button onClick={() => addElement('arrow')} className="bg-brand-accent p-3 rounded text-sm transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Arrow</button>
+                    <button onClick={() => addElement('stairs')} className="bg-brand-accent p-3 rounded text-sm transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Stairs</button>
                 </div>
 
                 <div className="flex-grow">
@@ -265,13 +265,13 @@ const ConstructorView: React.FC = () => {
                     )}
                 </div>
 
-                <button onClick={handleSaveLayout} className="w-full bg-brand-blue text-white font-bold py-3 mt-8 rounded-lg hover:bg-blue-600 transition-colors shadow-lg">Save Layout</button>
+                <button onClick={handleSaveLayout} className="w-full bg-brand-blue text-white font-bold py-3 mt-8 rounded-lg transition-colors shadow-lg" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d5b483'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Save Layout</button>
             </div>
 
             <div className="lg:col-span-3">
                 <div className="flex flex-col h-full">
                     <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-2xl font-bold">Layout Constructor for {restaurant.name}</h2>
+                        <h2 className="text-2xl font-bold" style={{ color: '#2c1f14' }}>Layout Constructor for {restaurant.name}</h2>
                         <div className="flex items-center space-x-2 bg-brand-secondary p-1 rounded-md border border-brand-accent">
                             {floors.map(f => (
                                 <button
@@ -286,14 +286,14 @@ const ConstructorView: React.FC = () => {
                         </div>
                     </div>
 
-                    <div ref={canvasRef} className="w-full h-[600px] bg-brand-primary rounded-lg relative overflow-hidden border-2 border-brand-accent bg-grid">
+                    <div ref={canvasRef} className="w-full h-[600px] rounded-lg relative overflow-hidden border-2 border-brand-accent bg-grid" style={{ backgroundColor: '#f5efe6' }}>
                         {currentFloorElements.map(el => {
                             const isSelected = el.id === selectedElementId;
                             const baseStyles = {
                                 left: `${el.x}px`, top: `${el.y}px`,
                                 width: `${el.width}px`, height: `${el.height}px`,
                                 zIndex: isSelected ? 10 : 1,
-                                outline: isSelected ? '2px solid #3b82f6' : 'none',
+                                outline: isSelected ? '2px solid #d5b483' : 'none',
                                 outlineOffset: '2px'
                             };
 
@@ -306,9 +306,9 @@ const ConstructorView: React.FC = () => {
                                 content = (el as TableElement).label;
                             } else if (el.type === 'text') {
                                 classes += ` bg-transparent border-dashed border border-gray-400 hover:border-solid`;
-                                content = <div style={{ fontSize: `${(el as TextElement).fontSize || 16}px` }} className="text-center w-full h-full overflow-hidden text-white leading-tight flex items-center justify-center p-1">{(el as TextElement).label}</div>;
+                                content = <div style={{ fontSize: `${(el as TextElement).fontSize || 16}px`, color: '#2c1f14' }} className="text-center w-full h-full overflow-hidden leading-tight flex items-center justify-center p-1">{(el as TextElement).label}</div>;
                             } else if (el.type === 'arrow') {
-                                classes += ` text-white`;
+                                classes += ` text-[#2c1f14]`;
                                 content = (
                                     <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
                                         <path d="M12 2L12 22M12 2L5 9M12 2L19 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -380,7 +380,7 @@ const ConstructorView: React.FC = () => {
 
             <style>{`
                 .bg-grid {
-                    background-image: linear-gradient(to right, #2d3748 1px, transparent 1px), linear-gradient(to bottom, #2d3748 1px, transparent 1px);
+                    background-image: linear-gradient(to right, #d5b483 1px, transparent 1px), linear-gradient(to bottom, #d5b483 1px, transparent 1px);
                     background-size: 40px 40px;
                 }
                 @keyframes fade-in {

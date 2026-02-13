@@ -287,11 +287,11 @@ const BookingModal: React.FC<BookingModalProps> = ({ table, restaurantId, onClos
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 transition-opacity duration-300">
             <div className="bg-brand-secondary rounded-lg shadow-2xl p-8 w-full max-w-md m-4 transform transition-all duration-300 scale-95 animate-fade-in-up">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-white">Book Table <span className="text-brand-blue">{table.label}</span></h2>
+                    <h2 className="text-2xl font-bold" style={{ color: '#2c1f14' }}>Book Table <span className="text-brand-blue">{table.label}</span></h2>
                     <button onClick={onClose} className="text-gray-400 text-3xl leading-none hover:text-white transition-colors">&times;</button>
                 </div>
                 <form onSubmit={handleSubmit}>
-                    <p className="text-gray-400 mb-6">For up to <span className="font-semibold text-white">{table.seats}</span> guests.</p>
+                    <p className="text-gray-400 mb-6">For up to <span className="font-semibold" style={{ color: '#989ea8' }}>{table.seats}</span> guests.</p>
 
                     {error && <p className="bg-red-900 border border-brand-red text-red-300 px-4 py-2 rounded-md mb-4 text-sm">{error}</p>}
 
@@ -313,7 +313,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ table, restaurantId, onClos
                                 <p className="text-sm text-gray-400">No active bookings for this table.</p>
                             )}
                         </div>
-                        <input type="text" placeholder="Your Name" value={guestName} onChange={e => setGuestName(e.target.value)} className="w-full bg-brand-accent p-3 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-blue" required />
+                        <input type="text" placeholder="Your Name" value={guestName} onChange={e => setGuestName(e.target.value)} className="w-full bg-brand-accent p-3 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-blue placeholder-[#f5efe6]" required />
                         <input
                             type="tel"
                             placeholder="+7 (___) ___-__-__"
@@ -331,22 +331,22 @@ const BookingModal: React.FC<BookingModalProps> = ({ table, restaurantId, onClos
 
                                 setGuestPhone(formatted);
                             }}
-                            className="w-full bg-brand-accent p-3 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-blue"
+                            className="w-full bg-brand-accent p-3 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-blue placeholder-[#f5efe6]"
                             required
                         />
 
                         <div className="flex items-center space-x-4">
-                            <label className="text-gray-300 w-20">Guests:</label>
+                            <label className="w-20" style={{ color: '#f5efe6' }}>Guests:</label>
                             <input type="number" value={guestCount} onChange={e => setGuestCount(parseInt(e.target.value))} min="1" max={table.seats} className="w-full bg-brand-accent p-3 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-blue" />
                         </div>
 
                         <div className="flex items-center space-x-4">
-                            <label className="text-gray-300 w-20">Date:</label>
+                            <label className="w-20" style={{ color: '#f5efe6' }}>Date:</label>
                             <input type="date" value={bookingDate} onChange={e => setBookingDate(e.target.value)} className="w-full bg-brand-accent p-3 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-blue" />
                         </div>
 
                         <div className="flex items-center space-x-4">
-                            <label className="text-gray-300 w-20">Time:</label>
+                            <label className="w-20" style={{ color: '#f5efe6' }}>Time:</label>
                             {availableSlots.length > 0 ? (
                                 <select
                                     value={bookingTime}
@@ -364,8 +364,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ table, restaurantId, onClos
                     </div>
 
                     <div className="mt-8 flex justify-end space-x-4">
-                        <button type="button" onClick={onClose} className="px-6 py-2 rounded-md bg-brand-accent text-white hover:bg-gray-600 transition-colors">Cancel</button>
-                        <button type="submit" disabled={availableSlots.length === 0} className={`px-6 py-2 rounded-md text-white font-semibold transition-colors shadow-md ${availableSlots.length === 0 ? 'bg-gray-600 cursor-not-allowed' : 'bg-brand-blue hover:bg-blue-600'}`}>Request Booking</button>
+                        <button type="button" onClick={onClose} className="px-6 py-2 rounded-md bg-brand-accent text-white transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c27d3e'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}>Cancel</button>
+                        <button type="submit" disabled={availableSlots.length === 0} className={`px-6 py-2 rounded-md text-white font-semibold transition-colors shadow-md ${availableSlots.length === 0 ? 'cursor-not-allowed' : 'bg-brand-blue'}`} style={availableSlots.length === 0 ? { backgroundColor: '#989ea8' } : undefined} onMouseEnter={(e) => { if (availableSlots.length > 0) e.currentTarget.style.backgroundColor = '#d5b483'; }} onMouseLeave={(e) => { if (availableSlots.length > 0) e.currentTarget.style.backgroundColor = ''; }}>Request Booking</button>
                     </div>
                 </form>
             </div>

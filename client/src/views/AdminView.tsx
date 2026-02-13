@@ -49,7 +49,7 @@ const BookingRequestCard: React.FC<{ booking: Booking; restaurantId: string }> =
                     Time Left: <CountdownTimer createdAt={booking.createdAt} />
                 </div>
             </div>
-            <p className="text-sm text-gray-300">{booking.guestName} ({booking.guestCount} guests)</p>
+            <p className="text-sm" style={{ color: '#f5efe6' }}>{booking.guestName} ({booking.guestCount} guests)</p>
             <p className="text-sm text-gray-400">{booking.dateTime.toLocaleString()}</p>
 
             {isDeclining ? (
@@ -140,7 +140,7 @@ const AdminView: React.FC = () => {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1">
-                <h2 className="text-2xl font-bold mb-4">New Booking Requests</h2>
+                <h2 className="text-2xl font-bold mb-4" style={{ color: '#2c1f14' }}>New Booking Requests</h2>
                 <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
                     {pendingBookings.length > 0 ? (
                         pendingBookings.map(b => <BookingRequestCard key={b.id} booking={b} restaurantId={restaurant.id} />)
@@ -211,7 +211,7 @@ const AdminView: React.FC = () => {
                 </div>
 
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold">Live Floor Plan for {restaurant.name}</h2>
+                    <h2 className="text-2xl font-bold" style={{ color: '#2c1f14' }}>Live Floor Plan for {restaurant.name}</h2>
                     {restaurant.floors && restaurant.floors.length > 1 && (
                         <div className="flex bg-brand-secondary p-1 rounded-lg border border-brand-accent">
                             {restaurant.floors.map(f => (
@@ -236,10 +236,10 @@ const AdminView: React.FC = () => {
 
                                 if (el.type === 'text') {
                                     const textEl = el as TextElement;
-                                    classes += ` bg-transparent text-center leading-tight overflow-hidden text-white`;
-                                    content = <div style={{ fontSize: `${textEl.fontSize || 16}px` }} className="w-full h-full flex items-center justify-center p-1">{textEl.label}</div>;
+                                    classes += ` bg-transparent text-center leading-tight overflow-hidden`;
+                                    content = <div style={{ fontSize: `${textEl.fontSize || 16}px`, color: '#2c1f14' }} className="w-full h-full flex items-center justify-center p-1">{textEl.label}</div>;
                                 } else if (el.type === 'arrow') {
-                                    classes += ` text-white`;
+                                    classes += ` text-[#2c1f14]`;
                                     content = (
                                         <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
                                             <path d="M12 2L12 22M12 2L5 9M12 2L19 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

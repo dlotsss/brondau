@@ -141,7 +141,7 @@ const RestaurantListView: React.FC = () => {
     return (
         <div className="min-h-screen bg-brand-secondary p-8 animate-fade-in">
             <div className="max-w-4xl mx-auto">
-                <h1 className="text-4xl font-bold text-white mb-2">Select a Restaurant</h1>
+                <h1 className="text-4xl font-bold mb-2" style={{ color: '#2c1f14' }}>Select a Restaurant</h1>
                 <p className="text-gray-400 mb-8">
                     {currentUser?.role === 'GUEST' ? "Choose a restaurant to view its floor plan and make a booking." : "Choose a restaurant to manage."}
                 </p>
