@@ -34,7 +34,7 @@ const LoginView: React.FC = () => {
         setShowRestaurantSelect(true);
         setSelectedRestaurant(restaurants[0].id);
       } else {
-        setError('No restaurants found for this email');
+        setError('Для этого email не найдено доступных ресторанов');
       }
     } else if (loginType === 'OWNER') {
       const restaurants = await getOwnerRestaurants(email);
@@ -43,7 +43,7 @@ const LoginView: React.FC = () => {
         setShowRestaurantSelect(true);
         setSelectedRestaurant(restaurants[0].id);
       } else {
-        setError('No ownership found for this email');
+        setError('Для этого email не найдено прав доступа владельца');
       }
     }
   };
@@ -53,7 +53,7 @@ const LoginView: React.FC = () => {
     setError('');
 
     if ((loginType === 'ADMIN' || loginType === 'OWNER') && !selectedRestaurant) {
-      setError('Please select a restaurant');
+      setError('Пожалуйста, выберите ресторан');
       return;
     }
 
@@ -80,6 +80,12 @@ const LoginView: React.FC = () => {
     }
   };
 
+  const roleLabels: Record<UserRole, string> = {
+    GUEST: 'Гость',
+    ADMIN: 'Админ',
+    OWNER: 'Владелец'
+  };
+
   return (
     <div className="min-h-screen bg-brand-secondary flex items-center justify-center p-4">
       <div className="bg-brand-accent p-8 rounded-lg shadow-lg max-w-md w-full">
@@ -93,10 +99,11 @@ const LoginView: React.FC = () => {
               onClick={() => setLoginType(role)}
               className={`w-full py-2 text-sm font-semibold rounded-md transition-colors ${loginType === role
                 ? 'bg-brand-blue text-white shadow'
-                : 'hover:bg-brand-secondary'} style={{ color: loginType !== role ? '#f5efe6' : undefined
+                : 'hover:bg-brand-secondary'
                 }`}
+              style={{ color: loginType !== role ? '#f5efe6' : undefined }}
             >
-              {role.charAt(0) + role.slice(1).toLowerCase()}
+              {roleLabels[role]}
             </button>
           ))}
         </div>

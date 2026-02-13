@@ -159,7 +159,7 @@ const UserView: React.FC = () => {
     }, [restaurant]);
 
     if (!restaurant) {
-        return <div className="text-center text-gray-400">Loading restaurant data...</div>;
+        return <div className="text-center text-gray-400">Загрузка данных ресторана...</div>;
     }
 
     return (

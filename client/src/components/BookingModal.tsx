@@ -174,11 +174,14 @@ const BookingModal: React.FC<BookingModalProps> = ({ table, restaurantId, onClos
     // Set initial time
     useEffect(() => {
         if (availableSlots.length > 0) {
-            setBookingTime(availableSlots[0]);
+            // Only set if not already set or if current selection is no longer available
+            if (!bookingTime || !availableSlots.includes(bookingTime)) {
+                setBookingTime(availableSlots[0]);
+            }
         } else {
             setBookingTime('');
         }
-    }, [availableSlots]);
+    }, [availableSlots, bookingTime]);
 
     const formatBookingSlot = (date: Date) =>
         new Intl.DateTimeFormat('ru-RU', {
@@ -203,21 +206,21 @@ const BookingModal: React.FC<BookingModalProps> = ({ table, restaurantId, onClos
         setError('');
 
         if (!guestName || !guestPhone) {
-            setError('Please fill in your name and phone number.');
+            setError('Пожалуйста, введите ваше имя и номер телефона.');
             return;
         }
 
         const phoneDigits = guestPhone.replace(/\D/g, '');
         if (phoneDigits.length !== 11) { // 7 + 10 digits
-            setError('Please enter a valid phone number: +7 (XXX) XXX-XX-XX');
+            setError('Пожалуйста, введите корректный номер телефона: +7 (XXX) XXX-XX-XX');
             return;
         }
         if (guestCount > table.seats) {
-            setError(`This table only accommodates up to ${table.seats} guests.`);
+            setError(`Этот столик вмещает не более ${table.seats} гостей.`);
             return;
         }
         if (!bookingTime) {
-            setError('No available time slot selected.');
+            setError('Не выбран доступный временной слот.');
             return;
         }
 
@@ -276,10 +279,10 @@ const BookingModal: React.FC<BookingModalProps> = ({ table, restaurantId, onClos
             const normalizedPhone = guestPhone.replace(/\D/g, '');
             subscribeToPush('GUEST', undefined, normalizedPhone);
 
-            alert('Your booking request has been sent!');
+            alert('Ваш запрос на бронирование отправлен!');
             onClose();
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to create booking. Please try again.');
+            setError(err instanceof Error ? err.message : 'Не удалось создать бронирование. Пожалуйста, попробуйте снова.');
         }
     };
 

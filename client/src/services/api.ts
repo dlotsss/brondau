@@ -13,7 +13,7 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Request failed: ${response.statusText}`);
+        throw new Error(errorData.error || `Ошибка запроса: ${response.statusText}`);
     }
 
     return response.json();

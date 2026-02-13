@@ -27,13 +27,13 @@ const Header: React.FC = () => {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-brand-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    RestoReserve
+                    Brondau
                 </h1>
                 {restaurant && (
                     <div className="hidden md:flex items-center ml-6">
                         <span className="w-px h-6 bg-brand-accent"></span>
                         <span className="ml-6 text-gray-300">
-                            Now Viewing: <strong className="text-white">{restaurant.name}</strong>
+                            Текущий ресторан: <strong className="text-white">{restaurant.name}</strong>
                         </span>
                     </div>
                 )}
@@ -48,7 +48,7 @@ const Header: React.FC = () => {
                     title="Change Restaurant"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0v-4m0 4h5m0 0v-4m0 4H8m2-8l4-4 4 4m0 0l-4 4-4-4z" /></svg>
-                    <span className="ml-2 hidden sm:inline">Change Restaurant</span>
+                    <span className="ml-2 hidden sm:inline">Сменить ресторан</span>
                 </button>
                 <button
                     onClick={handleLogout}
@@ -58,7 +58,7 @@ const Header: React.FC = () => {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
-                    <span className="ml-2 hidden sm:inline">Logout</span>
+                    <span className="ml-2 hidden sm:inline">Выйти</span>
                 </button>
             </div>
         </header>

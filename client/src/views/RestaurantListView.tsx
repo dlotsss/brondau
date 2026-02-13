@@ -68,7 +68,7 @@ const RestaurantCard: React.FC<{ restaurant: Restaurant; onSelect: () => void }>
                 <div className="flex items-center gap-2">
                     <span className={`w-3 h-3 rounded-full ${isFull ? 'bg-red-500' : 'bg-green-500'} animate-pulse`} />
                     <span className={`text-sm font-medium ${isFull ? 'text-red-400' : 'text-green-400'}`}>
-                        {isFull ? 'Все столики заняты' : `${freeTables} свободных столика`}
+                        {isFull ? 'Все столики заняты' : `Свободных столиков: ${freeTables}`}
                     </span>
                 </div>
                 <button className="text-brand-blue text-sm font-semibold group-hover:underline">Подробнее &rarr;</button>

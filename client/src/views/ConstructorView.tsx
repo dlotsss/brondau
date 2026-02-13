@@ -40,7 +40,7 @@ const ConstructorView: React.FC = () => {
     useEffect(() => {
         if (restaurant && !isInitialized) {
             setElements(restaurant.layout || []);
-            const resFloors = restaurant.floors || [{ id: 'floor-1', name: 'Main Floor' }];
+            const resFloors = restaurant.floors || [{ id: 'floor-1', name: 'Основной зал' }];
             setFloors(resFloors);
             setActiveFloorId(resFloors[0]?.id || '');
             setIsInitialized(true);
@@ -171,7 +171,7 @@ const ConstructorView: React.FC = () => {
                 type: 'text',
                 x: 100, y: 100,
                 width: 100, height: 40,
-                label: 'New Text',
+                label: 'Новый текст',
                 fontSize: 16,
                 floorId: activeFloorId
             } as TextElement;
@@ -201,7 +201,7 @@ const ConstructorView: React.FC = () => {
     };
 
     const addFloor = () => {
-        const name = prompt('Floor Name:', `Floor ${floors.length + 1}`);
+        const name = prompt('Название зала:', `Зал ${floors.length + 1}`);
         if (name) {
             const newFloor = { id: `floor-${Date.now()}`, name };
             setFloors(prev => [...prev, newFloor]);
@@ -212,11 +212,11 @@ const ConstructorView: React.FC = () => {
     const handleSaveLayout = () => {
         if (!selectedRestaurantId) return;
         updateLayout(selectedRestaurantId, elements, floors);
-        alert('Layout saved!');
+        alert('План зала сохранен!');
     };
 
     if (!restaurant) {
-        return <div className="text-center text-gray-400">Loading restaurant data...</div>;
+        return <div className="text-center text-gray-400">Загрузка данных ресторана...</div>;
     }
 
     const currentFloorElements = elements.filter(el => el.floorId === activeFloorId);

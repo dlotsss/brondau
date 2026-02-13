@@ -265,7 +265,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       for (const r of restaurants) {
         await loadBookings(r.id);
       }
-    }, 10000);
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [restaurants, loadBookings]);

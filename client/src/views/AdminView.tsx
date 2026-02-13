@@ -35,7 +35,7 @@ const BookingRequestCard: React.FC<{ booking: Booking; restaurantId: string }> =
 
     const handleDecline = () => {
         if (!reason.trim()) {
-            alert("Please provide a reason for declining.");
+            alert("Пожалуйста, укажите причину отклонения.");
             return;
         }
         updateBookingStatus(restaurantId, booking.id, BookingStatus.DECLINED, reason);
@@ -44,13 +44,13 @@ const BookingRequestCard: React.FC<{ booking: Booking; restaurantId: string }> =
     return (
         <div className="bg-brand-accent p-4 rounded-lg shadow-md transition-transform hover:scale-105">
             <div className="flex justify-between items-center">
-                <h4 className="font-bold text-lg">Table {booking.tableLabel}</h4>
+                <h4 className="font-bold text-lg">Столик {booking.tableLabel}</h4>
                 <div className="text-sm">
-                    Time Left: <CountdownTimer createdAt={booking.createdAt} />
+                    Осталось времени: <CountdownTimer createdAt={booking.createdAt} />
                 </div>
             </div>
-            <p className="text-sm" style={{ color: '#f5efe6' }}>{booking.guestName} ({booking.guestCount} guests)</p>
-            <p className="text-sm text-gray-400">{booking.dateTime.toLocaleString()}</p>
+            <p className="text-sm" style={{ color: '#f5efe6' }}>{booking.guestName} ({booking.guestCount} гостей)</p>
+            <p className="text-sm text-gray-400">{booking.dateTime.toLocaleString('ru-RU')}</p>
 
             {isDeclining ? (
                 <div className="mt-4 space-y-2">
@@ -134,7 +134,7 @@ const AdminView: React.FC = () => {
     }, [restaurant]);
 
     if (!restaurant) {
-        return <div className="text-center text-gray-400">Loading restaurant data...</div>;
+        return <div className="text-center text-gray-400">Загрузка данных ресторана...</div>;
     }
 
     return (
@@ -157,9 +157,9 @@ const AdminView: React.FC = () => {
                             {occupiedTableBookings.map(({ table, booking }) => (
                                 <div key={table.id} className="flex items-center justify-between gap-3 bg-brand-accent/60 rounded-md p-3">
                                     <div>
-                                        <p className="font-semibold">Table {table.label}</p>
+                                        <p className="font-semibold">Столик {table.label}</p>
                                         <p className="text-sm text-gray-300">
-                                            {booking.guestName} • {booking.dateTime.toLocaleString()}
+                                            {booking.guestName} • {booking.dateTime.toLocaleString('ru-RU')}
                                         </p>
                                     </div>
                                     <button
@@ -186,9 +186,9 @@ const AdminView: React.FC = () => {
                                 .map(booking => (
                                     <div key={booking.id} className="flex items-center justify-between gap-3 bg-brand-accent/40 rounded-md p-3">
                                         <div>
-                                            <p className="font-semibold">{booking.guestName} ({booking.guestCount} ppl)</p>
+                                            <p className="font-semibold">{booking.guestName} ({booking.guestCount} ч.)</p>
                                             <p className="text-sm text-gray-300">
-                                                Table {booking.tableLabel} • {booking.dateTime.toLocaleString()}
+                                                Столик {booking.tableLabel} • {booking.dateTime.toLocaleString('ru-RU')}
                                             </p>
                                         </div>
                                         <div className="flex items-center gap-2">
@@ -196,7 +196,7 @@ const AdminView: React.FC = () => {
                                                 Подтверждено
                                             </div>
                                             <button
-                                                onClick={() => updateBookingStatus(restaurant.id, booking.id, BookingStatus.DECLINED, "Cancelled by Admin")}
+                                                onClick={() => updateBookingStatus(restaurant.id, booking.id, BookingStatus.DECLINED, "Отменено администратором")}
                                                 className="bg-brand-red text-white px-2 py-1 text-xs font-semibold rounded hover:bg-red-700 transition-colors"
                                             >
                                                 Отменить
