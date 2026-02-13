@@ -2,10 +2,37 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
-
+import webpush from 'web-push';
 
 dotenv.config();
 import pool from './db.js';
+
+// ============ WEB PUSH SETUP ============
+webpush.setVapidDetails(
+  process.env.VAPID_EMAIL,
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
+
+async function sendPushToSubscriptions(subscriptions, payload) {
+  const payloadStr = JSON.stringify(payload);
+  for (const sub of subscriptions) {
+    try {
+      await webpush.sendNotification(
+        {
+          endpoint: sub.endpoint,
+          keys: { p256dh: sub.keys_p256dh, auth: sub.keys_auth }
+        },
+        payloadStr
+      );
+    } catch (err) {
+      console.error('Push send error:', err.statusCode || err.message);
+      if (err.statusCode === 410 || err.statusCode === 404) {
+        await pool.query('DELETE FROM push_subscriptions WHERE endpoint = $1', [sub.endpoint]);
+      }
+    }
+  }
+}
 
 const app = express();
 app.use(cors());
@@ -135,6 +162,52 @@ app.post('/api/auth/admin', async (req, res) => {
     });
   } catch (error) {
     console.error('Admin login error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ============ PUSH SUBSCRIPTIONS ============
+
+app.get('/api/push/vapid-public-key', (req, res) => {
+  res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
+});
+
+app.post('/api/push/subscribe', async (req, res) => {
+  try {
+    const { subscription, role, restaurantId, guestPhone } = req.body;
+
+    await pool.query(`
+      INSERT INTO push_subscriptions (endpoint, keys_p256dh, keys_auth, role, restaurant_id, guest_phone)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      ON CONFLICT (endpoint) DO UPDATE SET
+        keys_p256dh = EXCLUDED.keys_p256dh,
+        keys_auth = EXCLUDED.keys_auth,
+        role = EXCLUDED.role,
+        restaurant_id = EXCLUDED.restaurant_id,
+        guest_phone = EXCLUDED.guest_phone
+    `, [
+      subscription.endpoint,
+      subscription.keys.p256dh,
+      subscription.keys.auth,
+      role,
+      restaurantId || null,
+      guestPhone || null
+    ]);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Push subscribe error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/push/unsubscribe', async (req, res) => {
+  try {
+    const { endpoint } = req.body;
+    await pool.query('DELETE FROM push_subscriptions WHERE endpoint = $1', [endpoint]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Push unsubscribe error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -370,6 +443,24 @@ app.post('/api/restaurants/:restaurantId/bookings', async (req, res) => {
       RETURNING *
     `, [restaurantId, tableId, tableLabel, guestName, normalizedPhone, guestCount, dateTime]);
 
+    // Send push to admins of this restaurant
+    try {
+      const adminSubs = await pool.query(
+        `SELECT endpoint, keys_p256dh, keys_auth FROM push_subscriptions WHERE role = 'ADMIN' AND restaurant_id = $1`,
+        [restaurantId]
+      );
+      if (adminSubs.rows.length > 0) {
+        const bookingTime = new Date(dateTime).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        await sendPushToSubscriptions(adminSubs.rows, {
+          title: 'Новый запрос на бронирование',
+          body: `${guestName} — стол ${tableLabel}, ${bookingTime}, ${guestCount} гостей`,
+          tag: `booking-${result.rows[0].id}`
+        });
+      }
+    } catch (pushErr) {
+      console.error('Push notification error (admin):', pushErr);
+    }
+
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Create booking error:', error);
@@ -387,7 +478,40 @@ app.put('/api/bookings/:id/status', async (req, res) => {
       [status, declineReason || null, id]
     );
 
-    res.json(result.rows[0]);
+    const booking = result.rows[0];
+
+    // Send push to guest when booking is confirmed or declined
+    if (booking && (status === 'CONFIRMED' || status === 'DECLINED')) {
+      try {
+        const normalizedPhone = String(booking.guest_phone || '').replace(/\D/g, '');
+        const guestSubs = await pool.query(
+          `SELECT endpoint, keys_p256dh, keys_auth FROM push_subscriptions WHERE role = 'GUEST' AND guest_phone = $1`,
+          [normalizedPhone]
+        );
+        if (guestSubs.rows.length > 0) {
+          let title, body;
+          if (status === 'CONFIRMED') {
+            // Fetch restaurant details for the confirmed notification
+            const restResult = await pool.query('SELECT name, address FROM restaurants WHERE id = $1', [booking.restaurant_id]);
+            const rest = restResult.rows[0];
+            title = 'Бронирование подтверждено ✅';
+            body = `${rest?.name || ''}${rest?.address ? ', ' + rest.address : ''} — стол ${booking.table_label}, ${new Date(booking.date_time).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}`;
+          } else {
+            title = 'Бронирование отклонено ❌';
+            body = declineReason || 'Ваше бронирование было отклонено.';
+          }
+          await sendPushToSubscriptions(guestSubs.rows, {
+            title,
+            body,
+            tag: `booking-status-${booking.id}`
+          });
+        }
+      } catch (pushErr) {
+        console.error('Push notification error (guest):', pushErr);
+      }
+    }
+
+    res.json(booking);
   } catch (error) {
     console.error('Update booking status error:', error);
     res.status(500).json({ error: 'Server error' });

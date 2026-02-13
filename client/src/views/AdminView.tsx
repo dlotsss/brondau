@@ -1,9 +1,10 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useData } from '../context/DataContext';
 import { Booking, BookingStatus, TableElement, TextElement, DecoElement } from '../types';
 import { useApp } from '../context/AppContext';
 import BookingModal from '../components/BookingModal';
+import { registerServiceWorker, subscribeToPush } from '../services/pushService';
 
 const CountdownTimer: React.FC<{ createdAt: Date }> = ({ createdAt }) => {
     const [timeLeft, setTimeLeft] = useState(180);
@@ -93,6 +94,17 @@ const AdminView: React.FC = () => {
             setIsInitialized(true);
         }
     }, [restaurant, isInitialized]);
+
+    // Subscribe admin to push notifications
+    const pushSubscribed = useRef(false);
+    useEffect(() => {
+        if (selectedRestaurantId && !pushSubscribed.current) {
+            pushSubscribed.current = true;
+            registerServiceWorker().then(() => {
+                subscribeToPush('ADMIN', selectedRestaurantId);
+            });
+        }
+    }, [selectedRestaurantId]);
 
     const pendingBookings = useMemo(() => {
         if (!restaurant) return [];

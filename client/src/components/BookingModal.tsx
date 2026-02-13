@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BookingStatus, TableElement } from '../types';
 import { useData } from '../context/DataContext';
+import { subscribeToPush } from '../services/pushService';
 
 const parseTime = (timeStr: string): number => {
     const [hours, minutes] = timeStr.split(':').map(Number);
@@ -270,6 +271,11 @@ const BookingModal: React.FC<BookingModalProps> = ({ table, restaurantId, onClos
                 guestCount,
                 dateTime
             });
+
+            // Subscribe guest to push notifications for status updates
+            const normalizedPhone = guestPhone.replace(/\D/g, '');
+            subscribeToPush('GUEST', undefined, normalizedPhone);
+
             alert('Your booking request has been sent!');
             onClose();
         } catch (err) {
